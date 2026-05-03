@@ -5,36 +5,37 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.slideInVertically
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
+import androidx.compose.animation.*
+import androidx.compose.animation.core.*
+import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.grid.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.cosmoq1.data.Planet
-import com.example.cosmoq1.data.samplePlanets
+import com.example.cosmoq1.ui.components.GlassCard
 import com.example.cosmoq1.ui.components.SpaceGradientBackground
 import com.example.cosmoq1.ui.theme.*
+import com.example.cosmoq1.viewmodel.ExploreViewModel
 import kotlinx.coroutines.delay
 
 class ExploreActivity : ComponentActivity() {
@@ -51,65 +52,95 @@ class ExploreActivity : ComponentActivity() {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ExploreScreen() {
+fun ExploreScreen(vm: ExploreViewModel = viewModel()) {
     val context = LocalContext.current
+    val planets by vm.filteredPlanets.collectAsStateWithLifecycle()
+    val searchQuery by vm.searchQuery.collectAsStateWithLifecycle()
 
     SpaceGradientBackground {
         Scaffold(
             topBar = {
-                TopAppBar(
-                    title = {
-                        Text(
-                            text = "🌌 Explore Universe",
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 20.sp,
-                            color = StarWhite
-                        )
-                    },
-                    navigationIcon = {
-                        IconButton(onClick = { (context as? ExploreActivity)?.finish() }) {
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                                contentDescription = "Back",
-                                tint = SpaceCyan
+                Column {
+                    TopAppBar(
+                        title = {
+                            Text(
+                                "Explore Universe",
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 20.sp,
+                                color = StarWhite
                             )
-                        }
-                    },
-                    colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = Color.Transparent
+                        },
+                        navigationIcon = {
+                            IconButton(onClick = { (context as? ExploreActivity)?.finish() }) {
+                                Icon(
+                                    Icons.AutoMirrored.Filled.ArrowBack,
+                                    contentDescription = "Back",
+                                    tint = SpaceCyan
+                                )
+                            }
+                        },
+                        colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
                     )
-                )
+                    // Search bar
+                    OutlinedTextField(
+                        value = searchQuery,
+                        onValueChange = vm::onSearchQueryChange,
+                        placeholder = {
+                            Text("Search planets or type...", color = StarWhite.copy(alpha = 0.4f), fontSize = 14.sp)
+                        },
+                        leadingIcon = {
+                            Icon(Icons.Default.Search, contentDescription = null, tint = SpaceCyan)
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 4.dp),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = SpaceCyan,
+                            unfocusedBorderColor = CardBorder,
+                            focusedTextColor = StarWhite,
+                            unfocusedTextColor = StarWhite,
+                            cursorColor = SpaceCyan,
+                            focusedContainerColor = CardBackground.copy(alpha = 0.6f),
+                            unfocusedContainerColor = CardBackground.copy(alpha = 0.4f)
+                        ),
+                        singleLine = true
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                }
             },
             containerColor = Color.Transparent
         ) { innerPadding ->
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(innerPadding)
-                    .padding(horizontal = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-                contentPadding = PaddingValues(bottom = 24.dp, top = 8.dp)
-            ) {
-                item {
-                    Text(
-                        text = "Our Solar System",
-                        color = StarWhite.copy(alpha = 0.5f),
-                        fontSize = 13.sp,
-                        letterSpacing = 2.sp,
-                        modifier = Modifier.padding(bottom = 4.dp)
-                    )
+            if (planets.isEmpty()) {
+                Box(
+                    modifier = Modifier.fillMaxSize().padding(innerPadding),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text("No planets found", color = StarWhite.copy(alpha = 0.5f), fontSize = 16.sp)
                 }
-                itemsIndexed(samplePlanets) { index, planet ->
-                    AnimatedPlanetCard(
-                        planet = planet,
-                        index = index,
-                        onClick = {
-                            val intent = Intent(context, PlanetDetailActivity::class.java).apply {
-                                putExtra("planet_name", planet.name)
+            } else {
+                LazyVerticalGrid(
+                    columns = GridCells.Fixed(2),
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(innerPadding)
+                        .padding(horizontal = 12.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    contentPadding = PaddingValues(bottom = 24.dp, top = 8.dp)
+                ) {
+                    itemsIndexed(planets, key = { _, p -> p.name }) { index, planet ->
+                        AnimatedPlanetGridCard(
+                            planet = planet,
+                            index = index,
+                            onClick = {
+                                context.startActivity(
+                                    Intent(context, PlanetDetailActivity::class.java)
+                                        .putExtra("planet_name", planet.name)
+                                )
                             }
-                            context.startActivity(intent)
-                        }
-                    )
+                        )
+                    }
                 }
             }
         }
@@ -117,145 +148,117 @@ fun ExploreScreen() {
 }
 
 @Composable
-fun AnimatedPlanetCard(
-    planet: Planet,
-    index: Int,
-    onClick: () -> Unit
-) {
+fun AnimatedPlanetGridCard(planet: Planet, index: Int, onClick: () -> Unit) {
     var visible by remember { mutableStateOf(false) }
-
-    LaunchedEffect(Unit) {
-        delay(index * 80L)
+    LaunchedEffect(planet.name) {
+        delay(index * 60L)
         visible = true
     }
 
     AnimatedVisibility(
         visible = visible,
-        enter = fadeIn(animationSpec = tween(400)) +
-                slideInVertically(
-                    animationSpec = tween(400),
-                    initialOffsetY = { it / 2 }
-                )
+        enter = fadeIn(tween(400)) + slideInVertically(tween(400)) { it }
     ) {
-        PlanetCard(planet = planet, onClick = onClick)
+        PlanetGridCard(planet = planet, onClick = onClick)
     }
 }
 
 @Composable
-fun PlanetCard(planet: Planet, onClick: () -> Unit) {
+fun PlanetGridCard(planet: Planet, onClick: () -> Unit) {
     val planetColor = Color(planet.colorHex)
+    var pressed by remember { mutableStateOf(false) }
+    val scale by animateFloatAsState(
+        targetValue = if (pressed) 0.93f else 1f,
+        animationSpec = spring(Spring.DampingRatioMediumBouncy),
+        label = "cardScale"
+    )
 
-    Card(
+    LaunchedEffect(pressed) {
+        if (pressed) { delay(150); pressed = false }
+    }
+
+    GlassCard(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.Transparent),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+            .aspectRatio(0.78f)
+            .scale(scale)
+            .clickable { pressed = true; onClick() },
+        cornerRadius = 20.dp,
+        borderColor = planetColor.copy(alpha = 0.4f)
     ) {
-        Box(
+        Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .background(
-                    brush = Brush.horizontalGradient(
-                        colors = listOf(
-                            CardBackground,
-                            CardBackground.copy(alpha = 0.8f)
-                        )
-                    ),
-                    shape = RoundedCornerShape(16.dp)
-                )
-                .border(
-                    width = 1.dp,
-                    brush = Brush.horizontalGradient(
-                        colors = listOf(
-                            planetColor.copy(alpha = 0.5f),
-                            CardBorder.copy(alpha = 0.3f)
-                        )
-                    ),
-                    shape = RoundedCornerShape(16.dp)
-                )
-                .padding(16.dp)
+                .fillMaxSize()
+                .padding(14.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.SpaceBetween
         ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                // Planet color orb
-                Box(
-                    modifier = Modifier
-                        .size(52.dp)
-                        .clip(CircleShape)
-                        .background(
-                            brush = Brush.radialGradient(
-                                colors = listOf(
-                                    planetColor.copy(alpha = 0.9f),
-                                    planetColor.copy(alpha = 0.3f),
-                                    Color.Transparent
-                                )
+            // Planet orb
+            Box(
+                modifier = Modifier
+                    .size(80.dp)
+                    .clip(CircleShape)
+                    .background(
+                        Brush.radialGradient(
+                            colors = listOf(
+                                planetColor.copy(alpha = 0.95f),
+                                planetColor.copy(alpha = 0.4f),
+                                Color.Transparent
                             )
                         )
-                        .border(
-                            width = 1.5.dp,
-                            color = planetColor.copy(alpha = 0.6f),
-                            shape = CircleShape
-                        ),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = planetEmoji(planet.name),
-                        fontSize = 24.sp
                     )
-                }
+                    .border(1.5.dp, planetColor.copy(alpha = 0.5f), CircleShape),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(text = planetEmoji(planet.name), fontSize = 36.sp)
+            }
 
-                // Planet info
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = planet.name,
-                        color = StarWhite,
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = planet.shortDescription,
-                        color = StarWhite.copy(alpha = 0.65f),
-                        fontSize = 13.sp,
-                        lineHeight = 18.sp
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                        PlanetStat(label = "Moons", value = planet.moons.toString())
-                        PlanetStat(label = "Diameter", value = planet.diameter)
-                    }
-                }
-
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                    contentDescription = "View details",
-                    tint = planetColor.copy(alpha = 0.7f),
-                    modifier = Modifier.size(24.dp)
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(
+                    text = planet.name,
+                    color = StarWhite,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center
                 )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = planet.type,
+                    color = planetColor,
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Medium,
+                    modifier = Modifier
+                        .background(planetColor.copy(alpha = 0.15f), RoundedCornerShape(6.dp))
+                        .padding(horizontal = 8.dp, vertical = 2.dp)
+                )
+                Spacer(modifier = Modifier.height(6.dp))
+                Text(
+                    text = planet.shortDescription,
+                    color = StarWhite.copy(alpha = 0.6f),
+                    fontSize = 11.sp,
+                    textAlign = TextAlign.Center,
+                    lineHeight = 15.sp,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceEvenly
+            ) {
+                MiniStat(label = "Moons", value = planet.moons.toString(), color = SpaceGold)
+                MiniStat(label = "Gravity", value = planet.gravity, color = SpaceCyan)
             }
         }
     }
 }
 
 @Composable
-fun PlanetStat(label: String, value: String) {
-    Column {
-        Text(
-            text = label,
-            color = StarWhite.copy(alpha = 0.4f),
-            fontSize = 10.sp,
-            letterSpacing = 1.sp
-        )
-        Text(
-            text = value,
-            color = SpaceCyan,
-            fontSize = 11.sp,
-            fontWeight = FontWeight.SemiBold
-        )
+fun MiniStat(label: String, value: String, color: Color) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(text = label, color = StarWhite.copy(alpha = 0.4f), fontSize = 9.sp, letterSpacing = 0.5.sp)
+        Text(text = value, color = color, fontSize = 10.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
     }
 }
 

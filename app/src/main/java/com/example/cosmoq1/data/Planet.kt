@@ -8,14 +8,18 @@ data class Planet(
     val colorHex: Long,
     val distanceFromSun: String,
     val diameter: String,
-    val moons: Int
+    val moons: Int,
+    val gravity: String,
+    val temperature: String,
+    val orbitalPeriod: String,
+    val type: String
 )
 
 val samplePlanets = listOf(
     Planet(
         name = "Mercury",
         shortDescription = "The smallest and fastest planet, closest to the Sun.",
-        fullDescription = "Mercury is the smallest planet in our solar system and the closest to the Sun. Despite being closest to the Sun, it is not the hottest planet — that title belongs to Venus. Mercury has a very thin atmosphere, which means temperatures swing wildly between day and night.",
+        fullDescription = "Mercury is the smallest planet in our solar system and the closest to the Sun. Despite being closest to the Sun, it is not the hottest planet — that title belongs to Venus. Mercury has a very thin atmosphere, which means temperatures swing wildly between day and night. Its surface is heavily cratered, resembling Earth's Moon.",
         funFacts = listOf(
             "A year on Mercury is only 88 Earth days.",
             "Mercury has no moons and no rings.",
@@ -24,14 +28,18 @@ val samplePlanets = listOf(
             "It has a large iron core making up about 85% of its radius."
         ),
         colorHex = 0xFFB5B5B5,
-        distanceFromSun = "57.9 million km",
+        distanceFromSun = "57.9M km",
         diameter = "4,879 km",
-        moons = 0
+        moons = 0,
+        gravity = "3.7 m/s²",
+        temperature = "-180 to 430°C",
+        orbitalPeriod = "88 days",
+        type = "Terrestrial"
     ),
     Planet(
         name = "Venus",
         shortDescription = "The hottest planet, shrouded in thick toxic clouds.",
-        fullDescription = "Venus is the second planet from the Sun and is Earth's closest planetary neighbor. It's the hottest planet in our solar system, even though Mercury is closer to the Sun. Venus has a thick, toxic atmosphere filled with carbon dioxide and clouds of sulfuric acid.",
+        fullDescription = "Venus is the second planet from the Sun and is Earth's closest planetary neighbor. It's the hottest planet in our solar system, even though Mercury is closer to the Sun. Venus has a thick, toxic atmosphere filled with carbon dioxide and clouds of sulfuric acid. Its surface pressure is 90 times that of Earth.",
         funFacts = listOf(
             "Venus rotates backwards compared to most planets.",
             "A day on Venus is longer than a year on Venus.",
@@ -40,14 +48,18 @@ val samplePlanets = listOf(
             "It has over 1,600 major volcanoes on its surface."
         ),
         colorHex = 0xFFE8C56A,
-        distanceFromSun = "108.2 million km",
+        distanceFromSun = "108.2M km",
         diameter = "12,104 km",
-        moons = 0
+        moons = 0,
+        gravity = "8.87 m/s²",
+        temperature = "465°C",
+        orbitalPeriod = "225 days",
+        type = "Terrestrial"
     ),
     Planet(
         name = "Earth",
         shortDescription = "Our home — the only known planet with life.",
-        fullDescription = "Earth is the third planet from the Sun and the only astronomical object known to harbor life. About 71% of Earth's surface is covered with water. Earth's atmosphere protects life from harmful solar radiation and keeps the planet warm enough to sustain liquid water.",
+        fullDescription = "Earth is the third planet from the Sun and the only astronomical object known to harbor life. About 71% of Earth's surface is covered with water. Earth's atmosphere protects life from harmful solar radiation and keeps the planet warm enough to sustain liquid water. It has one natural satellite — the Moon.",
         funFacts = listOf(
             "Earth is the densest planet in the solar system.",
             "Earth's magnetic field protects us from solar wind.",
@@ -56,14 +68,18 @@ val samplePlanets = listOf(
             "One day on Earth is exactly 23 hours, 56 minutes, and 4 seconds."
         ),
         colorHex = 0xFF4A90D9,
-        distanceFromSun = "149.6 million km",
+        distanceFromSun = "149.6M km",
         diameter = "12,742 km",
-        moons = 1
+        moons = 1,
+        gravity = "9.81 m/s²",
+        temperature = "-88 to 58°C",
+        orbitalPeriod = "365.25 days",
+        type = "Terrestrial"
     ),
     Planet(
         name = "Mars",
         shortDescription = "The Red Planet — a cold desert world with the tallest volcano.",
-        fullDescription = "Mars is the fourth planet from the Sun and the second-smallest planet in the solar system. Often called the 'Red Planet' due to its reddish appearance caused by iron oxide on its surface. Mars has the tallest volcano and the longest canyon in the solar system.",
+        fullDescription = "Mars is the fourth planet from the Sun and the second-smallest planet in the solar system. Often called the 'Red Planet' due to its reddish appearance caused by iron oxide on its surface. Mars has the tallest volcano and the longest canyon in the solar system. It is a primary target for future human exploration.",
         funFacts = listOf(
             "Olympus Mons on Mars is the tallest volcano in the solar system at 22 km high.",
             "Mars has two small moons: Phobos and Deimos.",
@@ -72,30 +88,38 @@ val samplePlanets = listOf(
             "Evidence suggests Mars once had liquid water on its surface."
         ),
         colorHex = 0xFFD45F2E,
-        distanceFromSun = "227.9 million km",
+        distanceFromSun = "227.9M km",
         diameter = "6,779 km",
-        moons = 2
+        moons = 2,
+        gravity = "3.72 m/s²",
+        temperature = "-125 to 20°C",
+        orbitalPeriod = "687 days",
+        type = "Terrestrial"
     ),
     Planet(
         name = "Jupiter",
         shortDescription = "The largest planet — a giant storm world with 95 moons.",
-        fullDescription = "Jupiter is the fifth planet from the Sun and the largest in the solar system. It is a gas giant with a mass more than twice that of all the other planets combined. Jupiter's iconic Great Red Spot is a storm that has been raging for hundreds of years.",
+        fullDescription = "Jupiter is the fifth planet from the Sun and the largest in the solar system. It is a gas giant with a mass more than twice that of all the other planets combined. Jupiter's iconic Great Red Spot is a storm that has been raging for hundreds of years. Its powerful gravity acts as a shield for the inner solar system.",
         funFacts = listOf(
             "Jupiter's Great Red Spot is a storm larger than Earth.",
             "Jupiter has 95 known moons, including the four large Galilean moons.",
             "A day on Jupiter is only about 10 hours long.",
-            "Jupiter acts as a 'cosmic vacuum cleaner', protecting inner planets from asteroids.",
+            "Jupiter acts as a cosmic vacuum cleaner, protecting inner planets from asteroids.",
             "Jupiter emits more heat than it receives from the Sun."
         ),
         colorHex = 0xFFD4A96A,
-        distanceFromSun = "778.5 million km",
+        distanceFromSun = "778.5M km",
         diameter = "139,820 km",
-        moons = 95
+        moons = 95,
+        gravity = "24.79 m/s²",
+        temperature = "-108°C (cloud top)",
+        orbitalPeriod = "11.86 years",
+        type = "Gas Giant"
     ),
     Planet(
         name = "Saturn",
         shortDescription = "The ringed jewel of the solar system.",
-        fullDescription = "Saturn is the sixth planet from the Sun and the second-largest in the solar system. It is a gas giant with an average radius about nine and a half times that of Earth. Saturn is best known for its stunning ring system, which is made up of ice and rock particles.",
+        fullDescription = "Saturn is the sixth planet from the Sun and the second-largest in the solar system. It is a gas giant best known for its stunning ring system, which is made up of ice and rock particles ranging in size from tiny grains to house-sized chunks. Saturn is the least dense planet in the solar system.",
         funFacts = listOf(
             "Saturn's rings are made of ice and rock, spanning up to 282,000 km.",
             "Saturn is the least dense planet — it could float on water.",
@@ -104,14 +128,18 @@ val samplePlanets = listOf(
             "Saturn takes 29.5 Earth years to orbit the Sun."
         ),
         colorHex = 0xFFF4D03F,
-        distanceFromSun = "1.43 billion km",
+        distanceFromSun = "1.43B km",
         diameter = "116,460 km",
-        moons = 146
+        moons = 146,
+        gravity = "10.44 m/s²",
+        temperature = "-139°C (cloud top)",
+        orbitalPeriod = "29.5 years",
+        type = "Gas Giant"
     ),
     Planet(
         name = "Uranus",
         shortDescription = "The ice giant that rotates on its side.",
-        fullDescription = "Uranus is the seventh planet from the Sun. It has the third-largest planetary radius and fourth-largest planetary mass in the solar system. Uranus is an ice giant — its interior is mainly composed of icy materials. It rotates on its side with an axial tilt of 98 degrees.",
+        fullDescription = "Uranus is the seventh planet from the Sun and an ice giant whose interior is mainly composed of icy materials. It rotates on its side with an axial tilt of 98 degrees, likely the result of a massive collision early in the solar system's history. It has 13 known rings and 28 known moons.",
         funFacts = listOf(
             "Uranus rotates on its side — its axial tilt is 98 degrees.",
             "Uranus has 13 known rings and 28 known moons.",
@@ -120,14 +148,18 @@ val samplePlanets = listOf(
             "A year on Uranus equals 84 Earth years."
         ),
         colorHex = 0xFF7DE8E8,
-        distanceFromSun = "2.87 billion km",
+        distanceFromSun = "2.87B km",
         diameter = "50,724 km",
-        moons = 28
+        moons = 28,
+        gravity = "8.69 m/s²",
+        temperature = "-224°C",
+        orbitalPeriod = "84 years",
+        type = "Ice Giant"
     ),
     Planet(
         name = "Neptune",
         shortDescription = "The windiest planet — a dark, cold, supersonic world.",
-        fullDescription = "Neptune is the eighth and farthest known planet from the Sun. It is the fourth-largest planet by diameter and the third-largest by mass. Neptune is 17 times the mass of Earth and is slightly more massive than its near-twin Uranus. It has the strongest winds in the solar system.",
+        fullDescription = "Neptune is the eighth and farthest known planet from the Sun. It is an ice giant with the strongest winds in the solar system, reaching up to 2,100 km/h. Neptune was predicted mathematically before it was directly observed, making it the only planet found through mathematical prediction rather than observation.",
         funFacts = listOf(
             "Neptune has the strongest winds in the solar system — up to 2,100 km/h.",
             "Neptune has 16 known moons; the largest is Triton.",
@@ -136,8 +168,12 @@ val samplePlanets = listOf(
             "Neptune's Great Dark Spot was a storm the size of Earth."
         ),
         colorHex = 0xFF4169E1,
-        distanceFromSun = "4.5 billion km",
+        distanceFromSun = "4.5B km",
         diameter = "49,244 km",
-        moons = 16
+        moons = 16,
+        gravity = "11.15 m/s²",
+        temperature = "-214°C",
+        orbitalPeriod = "165 years",
+        type = "Ice Giant"
     )
 )

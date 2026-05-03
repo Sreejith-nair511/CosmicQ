@@ -4,19 +4,9 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.spring
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideOutHorizontally
-import androidx.compose.animation.togetherWith
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
+import androidx.compose.animation.*
+import androidx.compose.animation.core.*
+import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -30,15 +20,19 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.cosmoq1.data.QuizQuestion
-import com.example.cosmoq1.data.quizQuestions
+import com.example.cosmoq1.ui.components.GlassCard
 import com.example.cosmoq1.ui.components.SpaceGradientBackground
 import com.example.cosmoq1.ui.theme.*
+import com.example.cosmoq1.viewmodel.QuizViewModel
 import kotlinx.coroutines.delay
 
 class QuizActivity : ComponentActivity() {
@@ -55,56 +49,37 @@ class QuizActivity : ComponentActivity() {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun QuizScreen() {
+fun QuizScreen(vm: QuizViewModel = viewModel()) {
     val context = LocalContext.current
-    val questions = remember { quizQuestions.shuffled() }
-
-    var currentIndex by remember { mutableIntStateOf(0) }
-    var score by remember { mutableIntStateOf(0) }
-    var selectedAnswer by remember { mutableStateOf<Int?>(null) }
-    var showResult by remember { mutableStateOf(false) }
-    var quizFinished by remember { mutableStateOf(false) }
-    var feedbackMessage by remember { mutableStateOf("") }
+    val state by vm.uiState.collectAsStateWithLifecycle()
 
     SpaceGradientBackground {
         Scaffold(
             topBar = {
                 TopAppBar(
-                    title = {
-                        Text(
-                            text = "🌟 Quiz Mode",
-                            fontWeight = FontWeight.Bold,
-                            color = StarWhite
-                        )
-                    },
+                    title = { Text("Space Quiz", fontWeight = FontWeight.Bold, color = StarWhite) },
                     navigationIcon = {
                         IconButton(onClick = { (context as? QuizActivity)?.finish() }) {
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                                contentDescription = "Back",
-                                tint = SpacePurpleLight
-                            )
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = SpacePurpleLight)
                         }
                     },
-                    colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = Color.Transparent
-                    )
+                    colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
                 )
             },
             containerColor = Color.Transparent
         ) { innerPadding ->
-            if (quizFinished) {
+            if (state.questions.isEmpty()) {
+                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator(color = SpaceCyan)
+                }
+                return@Scaffold
+            }
+
+            if (state.isFinished) {
                 QuizResultScreen(
-                    score = score,
-                    total = questions.size,
-                    onRestart = {
-                        currentIndex = 0
-                        score = 0
-                        selectedAnswer = null
-                        showResult = false
-                        quizFinished = false
-                        feedbackMessage = ""
-                    },
+                    score = state.score,
+                    total = state.questions.size,
+                    onRestart = vm::restartQuiz,
                     modifier = Modifier.padding(innerPadding)
                 )
             } else {
@@ -117,91 +92,63 @@ fun QuizScreen() {
                 ) {
                     Spacer(modifier = Modifier.height(8.dp))
 
-                    // Progress bar
                     QuizProgressBar(
-                        current = currentIndex,
-                        total = questions.size,
-                        score = score
+                        current = state.currentIndex,
+                        total = state.questions.size,
+                        score = state.score
                     )
 
-                    Spacer(modifier = Modifier.height(24.dp))
+                    Spacer(modifier = Modifier.height(20.dp))
 
-                    // Question card with slide animation
                     AnimatedContent(
-                        targetState = currentIndex,
+                        targetState = state.currentIndex,
                         transitionSpec = {
-                            (slideInHorizontally(tween(300)) { it } + fadeIn(tween(300)))
-                                .togetherWith(slideOutHorizontally(tween(300)) { -it } + fadeOut(tween(300)))
+                            (slideInHorizontally(tween(350)) { it } + fadeIn(tween(350)))
+                                .togetherWith(slideOutHorizontally(tween(350)) { -it } + fadeOut(tween(200)))
                         },
-                        label = "questionTransition"
+                        label = "questionAnim"
                     ) { index ->
-                        QuestionCard(question = questions[index])
+                        QuestionCard(question = state.questions[index])
                     }
 
-                    Spacer(modifier = Modifier.height(24.dp))
+                    Spacer(modifier = Modifier.height(20.dp))
 
-                    // Answer options
                     AnimatedContent(
-                        targetState = currentIndex,
+                        targetState = state.currentIndex,
                         transitionSpec = {
                             (fadeIn(tween(400)) + slideInHorizontally(tween(400)) { it / 2 })
                                 .togetherWith(fadeOut(tween(200)))
                         },
-                        label = "optionsTransition"
+                        label = "optionsAnim"
                     ) { index ->
                         AnswerOptions(
-                            question = questions[index],
-                            selectedAnswer = selectedAnswer,
-                            onAnswerSelected = { answerIndex ->
-                                if (selectedAnswer == null) {
-                                    selectedAnswer = answerIndex
-                                    val isCorrect = answerIndex == questions[index].correctIndex
-                                    if (isCorrect) {
-                                        score++
-                                        feedbackMessage = "🎉 Correct!"
-                                    } else {
-                                        feedbackMessage = "❌ Wrong! The answer was: ${questions[index].options[questions[index].correctIndex]}"
-                                    }
-                                    showResult = true
-                                }
-                            }
+                            question = state.questions[index],
+                            selectedAnswer = state.selectedAnswer,
+                            correctIndex = state.questions[index].correctIndex,
+                            onAnswerSelected = vm::selectAnswer
                         )
                     }
 
-                    Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.height(14.dp))
 
-                    // Feedback message
                     AnimatedVisibility(
-                        visible = showResult,
-                        enter = fadeIn(tween(300)) + slideInHorizontally(tween(300)) { -it / 2 }
+                        visible = state.showFeedback,
+                        enter = fadeIn(tween(300)) + expandVertically(tween(300))
                     ) {
-                        val isCorrect = selectedAnswer == questions[currentIndex].correctIndex
                         FeedbackBanner(
-                            message = feedbackMessage,
-                            isCorrect = isCorrect
+                            message = state.feedbackMessage,
+                            isCorrect = state.isCorrect
                         )
                     }
 
                     Spacer(modifier = Modifier.weight(1f))
 
-                    // Next button
-                    AnimatedVisibility(visible = showResult) {
-                        val isLast = currentIndex == questions.size - 1
+                    AnimatedVisibility(visible = state.showFeedback) {
+                        val isLast = state.currentIndex == state.questions.size - 1
                         CosmicButton(
-                            text = if (isLast) "See Results 🏆" else "Next Question →",
-                            gradient = Brush.horizontalGradient(
-                                colors = listOf(SpacePurple, SpaceCyan.copy(alpha = 0.7f))
-                            ),
-                            onClick = {
-                                if (isLast) {
-                                    quizFinished = true
-                                } else {
-                                    currentIndex++
-                                    selectedAnswer = null
-                                    showResult = false
-                                    feedbackMessage = ""
-                                }
-                            },
+                            text = if (isLast) "See Results" else "Next Question",
+                            gradient = Brush.horizontalGradient(listOf(SpacePurple, SpaceCyan.copy(0.8f))),
+                            onClick = vm::nextQuestion,
                             modifier = Modifier.fillMaxWidth()
                         )
                     }
@@ -215,11 +162,11 @@ fun QuizScreen() {
 
 @Composable
 fun QuizProgressBar(current: Int, total: Int, score: Int) {
-    val progress = current.toFloat() / total.toFloat()
+    val progress = (current + 1).toFloat() / total.toFloat()
     val animatedProgress by animateFloatAsState(
         targetValue = progress,
-        animationSpec = tween(500),
-        label = "progress"
+        animationSpec = tween(600),
+        label = "quizProgress"
     )
 
     Column(modifier = Modifier.fillMaxWidth()) {
@@ -228,12 +175,12 @@ fun QuizProgressBar(current: Int, total: Int, score: Int) {
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Text(
-                text = "Question ${current + 1} of $total",
+                "Question ${current + 1} / $total",
                 color = StarWhite.copy(alpha = 0.7f),
                 fontSize = 13.sp
             )
             Text(
-                text = "Score: $score ⭐",
+                "Score: $score",
                 color = SpaceGold,
                 fontSize = 13.sp,
                 fontWeight = FontWeight.Bold
@@ -243,8 +190,8 @@ fun QuizProgressBar(current: Int, total: Int, score: Int) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(6.dp)
-                .clip(RoundedCornerShape(3.dp))
+                .height(8.dp)
+                .clip(RoundedCornerShape(4.dp))
                 .background(CardBackground)
         ) {
             Box(
@@ -253,7 +200,7 @@ fun QuizProgressBar(current: Int, total: Int, score: Int) {
                     .fillMaxHeight()
                     .background(
                         Brush.horizontalGradient(listOf(SpacePurple, SpaceCyan)),
-                        RoundedCornerShape(3.dp)
+                        RoundedCornerShape(4.dp)
                     )
             )
         }
@@ -262,28 +209,26 @@ fun QuizProgressBar(current: Int, total: Int, score: Int) {
 
 @Composable
 fun QuestionCard(question: QuizQuestion) {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(CardBackground, RoundedCornerShape(20.dp))
-            .border(
-                1.dp,
-                Brush.horizontalGradient(
-                    listOf(SpacePurple.copy(alpha = 0.5f), SpaceCyan.copy(alpha = 0.3f))
-                ),
-                RoundedCornerShape(20.dp)
-            )
-            .padding(24.dp),
-        contentAlignment = Alignment.Center
+    GlassCard(
+        modifier = Modifier.fillMaxWidth(),
+        cornerRadius = 20.dp,
+        borderColor = SpacePurple.copy(alpha = 0.5f)
     ) {
-        Text(
-            text = question.question,
-            color = StarWhite,
-            fontSize = 20.sp,
-            fontWeight = FontWeight.SemiBold,
-            textAlign = TextAlign.Center,
-            lineHeight = 30.sp
-        )
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(24.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = question.question,
+                color = StarWhite,
+                fontSize = 19.sp,
+                fontWeight = FontWeight.SemiBold,
+                textAlign = TextAlign.Center,
+                lineHeight = 28.sp
+            )
+        }
     }
 }
 
@@ -291,6 +236,7 @@ fun QuestionCard(question: QuizQuestion) {
 fun AnswerOptions(
     question: QuizQuestion,
     selectedAnswer: Int?,
+    correctIndex: Int,
     onAnswerSelected: (Int) -> Unit
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -299,7 +245,7 @@ fun AnswerOptions(
                 text = option,
                 index = index,
                 selectedAnswer = selectedAnswer,
-                correctIndex = question.correctIndex,
+                correctIndex = correctIndex,
                 onSelected = { onAnswerSelected(index) }
             )
         }
@@ -316,54 +262,44 @@ fun AnswerButton(
 ) {
     var pressed by remember { mutableStateOf(false) }
     val scale by animateFloatAsState(
-        targetValue = if (pressed) 0.96f else 1f,
+        targetValue = if (pressed) 0.95f else 1f,
         animationSpec = spring(Spring.DampingRatioMediumBouncy),
         label = "answerScale"
     )
 
-    LaunchedEffect(pressed) {
-        if (pressed) {
-            delay(120)
-            pressed = false
+    // Shake animation for wrong answer
+    val shakeAnim = remember { Animatable(0f) }
+    val isWrong = selectedAnswer == index && index != correctIndex
+    LaunchedEffect(isWrong) {
+        if (isWrong) {
+            repeat(4) {
+                shakeAnim.animateTo(8f, tween(50))
+                shakeAnim.animateTo(-8f, tween(50))
+            }
+            shakeAnim.animateTo(0f, tween(50))
         }
     }
 
+    LaunchedEffect(pressed) {
+        if (pressed) { delay(120); pressed = false }
+    }
+
     val (bgColor, borderColor, textColor) = when {
-        selectedAnswer == null -> Triple(
-            CardBackground,
-            CardBorder.copy(alpha = 0.5f),
-            StarWhite
-        )
-        index == correctIndex -> Triple(
-            SpaceGreen.copy(alpha = 0.2f),
-            SpaceGreen,
-            SpaceGreen
-        )
-        index == selectedAnswer -> Triple(
-            SpaceRed.copy(alpha = 0.2f),
-            SpaceRed,
-            SpaceRed
-        )
-        else -> Triple(
-            CardBackground.copy(alpha = 0.5f),
-            CardBorder.copy(alpha = 0.2f),
-            StarWhite.copy(alpha = 0.4f)
-        )
+        selectedAnswer == null -> Triple(CardBackground, CardBorder.copy(0.5f), StarWhite)
+        index == correctIndex  -> Triple(SpaceGreen.copy(0.2f), SpaceGreen, SpaceGreen)
+        index == selectedAnswer -> Triple(SpaceRed.copy(0.2f), SpaceRed, SpaceRed)
+        else -> Triple(CardBackground.copy(0.4f), CardBorder.copy(0.2f), StarWhite.copy(0.35f))
     }
 
     val optionLabel = listOf("A", "B", "C", "D")[index]
 
     Button(
-        onClick = {
-            if (selectedAnswer == null) {
-                pressed = true
-                onSelected()
-            }
-        },
+        onClick = { if (selectedAnswer == null) { pressed = true; onSelected() } },
         modifier = Modifier
             .fillMaxWidth()
-            .height(54.dp)
-            .scale(scale),
+            .height(56.dp)
+            .scale(scale)
+            .graphicsLayer { translationX = shakeAnim.value },
         shape = RoundedCornerShape(14.dp),
         colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
         contentPadding = PaddingValues(0.dp),
@@ -383,24 +319,14 @@ fun AnswerButton(
             ) {
                 Box(
                     modifier = Modifier
-                        .size(28.dp)
-                        .background(borderColor.copy(alpha = 0.2f), CircleShape)
+                        .size(30.dp)
+                        .background(borderColor.copy(0.2f), CircleShape)
                         .border(1.dp, borderColor, CircleShape),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text(
-                        text = optionLabel,
-                        color = textColor,
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Bold
-                    )
+                    Text(optionLabel, color = textColor, fontSize = 12.sp, fontWeight = FontWeight.Bold)
                 }
-                Text(
-                    text = text,
-                    color = textColor,
-                    fontSize = 15.sp,
-                    fontWeight = FontWeight.Medium
-                )
+                Text(text, color = textColor, fontSize = 15.sp, fontWeight = FontWeight.Medium)
             }
         }
     }
@@ -412,15 +338,15 @@ fun FeedbackBanner(message: String, isCorrect: Boolean) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .background(color.copy(alpha = 0.15f), RoundedCornerShape(12.dp))
-            .border(1.dp, color.copy(alpha = 0.5f), RoundedCornerShape(12.dp))
-            .padding(12.dp),
+            .background(color.copy(0.15f), RoundedCornerShape(14.dp))
+            .border(1.dp, color.copy(0.5f), RoundedCornerShape(14.dp))
+            .padding(14.dp),
         contentAlignment = Alignment.Center
     ) {
         Text(
             text = message,
             color = color,
-            fontSize = 15.sp,
+            fontSize = 14.sp,
             fontWeight = FontWeight.SemiBold,
             textAlign = TextAlign.Center
         )
@@ -428,71 +354,47 @@ fun FeedbackBanner(message: String, isCorrect: Boolean) {
 }
 
 @Composable
-fun QuizResultScreen(
-    score: Int,
-    total: Int,
-    onRestart: () -> Unit,
-    modifier: Modifier = Modifier
-) {
+fun QuizResultScreen(score: Int, total: Int, onRestart: () -> Unit, modifier: Modifier = Modifier) {
     val percentage = (score.toFloat() / total.toFloat() * 100).toInt()
-    val (emoji, message) = when {
-        percentage >= 90 -> "🏆" to "Cosmic Master!"
-        percentage >= 70 -> "🌟" to "Star Explorer!"
-        percentage >= 50 -> "🚀" to "Space Cadet!"
-        else             -> "🌙" to "Keep Exploring!"
+    val message = when {
+        percentage >= 90 -> "Cosmic Master!"
+        percentage >= 70 -> "Star Explorer!"
+        percentage >= 50 -> "Space Cadet!"
+        else             -> "Keep Exploring!"
+    }
+    val emoji = when {
+        percentage >= 90 -> "🏆"
+        percentage >= 70 -> "🌟"
+        percentage >= 50 -> "🚀"
+        else             -> "🌙"
     }
 
     var visible by remember { mutableStateOf(false) }
     val scale by animateFloatAsState(
-        targetValue = if (visible) 1f else 0.5f,
+        targetValue = if (visible) 1f else 0.4f,
         animationSpec = spring(Spring.DampingRatioMediumBouncy, Spring.StiffnessLow),
         label = "resultScale"
     )
-
     LaunchedEffect(Unit) { visible = true }
 
     Column(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(horizontal = 32.dp),
+        modifier = modifier.fillMaxSize().padding(horizontal = 32.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Text(
-            text = emoji,
-            fontSize = 80.sp,
-            modifier = Modifier.scale(scale)
-        )
-
+        Text(emoji, fontSize = 80.sp, modifier = Modifier.scale(scale))
         Spacer(modifier = Modifier.height(16.dp))
-
-        Text(
-            text = message,
-            color = SpaceGold,
-            fontSize = 32.sp,
-            fontWeight = FontWeight.Black,
-            textAlign = TextAlign.Center
-        )
-
+        Text(message, color = SpaceGold, fontSize = 30.sp, fontWeight = FontWeight.Black, textAlign = TextAlign.Center)
         Spacer(modifier = Modifier.height(8.dp))
+        Text("Final Score", color = StarWhite.copy(0.55f), fontSize = 15.sp)
+        Spacer(modifier = Modifier.height(20.dp))
 
-        Text(
-            text = "You scored",
-            color = StarWhite.copy(alpha = 0.6f),
-            fontSize = 16.sp
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // Score circle
         Box(
             modifier = Modifier
-                .size(140.dp)
+                .size(150.dp)
                 .scale(scale)
                 .background(
-                    Brush.radialGradient(
-                        listOf(SpacePurple.copy(alpha = 0.3f), Color.Transparent)
-                    ),
+                    Brush.radialGradient(listOf(SpacePurple.copy(0.3f), Color.Transparent)),
                     CircleShape
                 )
                 .border(
@@ -503,29 +405,17 @@ fun QuizResultScreen(
             contentAlignment = Alignment.Center
         ) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text(
-                    text = "$score/$total",
-                    color = StarWhite,
-                    fontSize = 36.sp,
-                    fontWeight = FontWeight.Black
-                )
-                Text(
-                    text = "$percentage%",
-                    color = SpaceCyan,
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold
-                )
+                Text("$score/$total", color = StarWhite, fontSize = 38.sp, fontWeight = FontWeight.Black)
+                Text("$percentage%", color = SpaceCyan, fontSize = 16.sp, fontWeight = FontWeight.Bold)
             }
         }
 
         Spacer(modifier = Modifier.height(48.dp))
-
         CosmicButton(
-            text = "🔄  Play Again",
-            gradient = Brush.horizontalGradient(
-                listOf(SpacePurple, SpaceCyan.copy(alpha = 0.8f))
-            ),
+            text = "Play Again",
+            gradient = Brush.horizontalGradient(listOf(SpacePurple, SpaceCyan.copy(0.8f))),
             onClick = onRestart,
+            icon = "🔄",
             modifier = Modifier.fillMaxWidth()
         )
     }

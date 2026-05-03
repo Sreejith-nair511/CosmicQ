@@ -56,5 +56,30 @@ val quizQuestions = listOf(
         question = "Which planet has the strongest winds in the solar system?",
         options = listOf("Jupiter", "Saturn", "Uranus", "Neptune"),
         correctIndex = 3
+    ),
+    QuizQuestion(
+        question = "What is the smallest planet in our solar system?",
+        options = listOf("Mars", "Venus", "Mercury", "Pluto"),
+        correctIndex = 2
+    ),
+    QuizQuestion(
+        question = "Which planet is least dense and could float on water?",
+        options = listOf("Jupiter", "Uranus", "Neptune", "Saturn"),
+        correctIndex = 3
+    ),
+    QuizQuestion(
+        question = "How long does light take to travel from the Sun to Earth?",
+        options = listOf("About 8 minutes", "About 1 hour", "About 1 second", "About 1 day"),
+        correctIndex = 0
+    ),
+    QuizQuestion(
+        question = "Which planet was the first discovered using a telescope?",
+        options = listOf("Neptune", "Saturn", "Uranus", "Jupiter"),
+        correctIndex = 2
+    ),
+    QuizQuestion(
+        question = "What type of planet is Jupiter?",
+        options = listOf("Terrestrial", "Ice Giant", "Gas Giant", "Dwarf Planet"),
+        correctIndex = 2
     )
 )
