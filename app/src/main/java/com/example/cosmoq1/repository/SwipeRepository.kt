@@ -14,24 +14,26 @@ class SwipeRepository(private val db: AppDatabase) {
 
     // ---- Remote ----
 
-    suspend fun fetchCards(): List<SwipeCard> = coroutineScope {
-        val newsDeferred   = async { runCatching { fetchNews() }.getOrElse { emptyList() } }
+    suspend fun fetchCards(offset: Int = 0): List<SwipeCard> = coroutineScope {
+        val newsDeferred   = async { runCatching { fetchNews(offset) }.getOrElse { emptyList() } }
         val apodDeferred   = async { runCatching { fetchApod() }.getOrElse { null } }
         val spaceXDeferred = async { runCatching { fetchSpaceX() }.getOrElse { null } }
 
         val cards = mutableListOf<SwipeCard>()
         cards.addAll(newsDeferred.await())
-        apodDeferred.await()?.let { cards.add(it) }
-        spaceXDeferred.await()?.let { cards.add(it) }
+        if (offset == 0) {
+            apodDeferred.await()?.let { cards.add(it) }
+            spaceXDeferred.await()?.let { cards.add(it) }
+        }
         cards.shuffled()
     }
 
-    private suspend fun fetchNews(): List<SwipeCard> =
-        RetrofitClient.spaceNewsApi.getArticles(limit = 20).results.map { article ->
+    private suspend fun fetchNews(offset: Int = 0): List<SwipeCard> =
+        RetrofitClient.spaceNewsApi.getArticles(limit = 100, offset = offset).results.map { article ->
             SwipeCard(
                 id          = "news_${article.id}",
                 title       = article.title,
-                summary     = article.summary.take(200),
+                summary     = article.summary.take(220),
                 imageUrl    = article.imageUrl,
                 category    = CardCategory.NEWS,
                 source      = article.newsSite,

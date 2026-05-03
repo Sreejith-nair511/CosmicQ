@@ -12,20 +12,26 @@ data class Planet(
     val gravity: String,
     val temperature: String,
     val orbitalPeriod: String,
-    val type: String
+    val type: String,
+    val composition: String = "",
+    val atmosphere: String = "",
+    val magneticField: String = "",
+    val explorationHighlight: String = "",
+    val researchNote: String = ""
 )
 
 val samplePlanets = listOf(
     Planet(
         name = "Mercury",
-        shortDescription = "The smallest and fastest planet, closest to the Sun.",
-        fullDescription = "Mercury is the smallest planet in our solar system and the closest to the Sun. Despite being closest to the Sun, it is not the hottest planet — that title belongs to Venus. Mercury has a very thin atmosphere, which means temperatures swing wildly between day and night. Its surface is heavily cratered, resembling Earth's Moon.",
+        shortDescription = "The smallest planet with the largest proportional iron core in the Solar System.",
+        fullDescription = "Mercury is the innermost planet with a mean radius of 2,439.7 km and the highest orbital eccentricity (0.206) among the eight planets. It lacks a substantial atmosphere due to its low escape velocity of 4.25 km/s. Mercury exhibits a 3:2 spin-orbit resonance — three rotations per two orbital revolutions — making a solar day 176 Earth days long. Its iron core comprises roughly 85% of the planetary radius, hypothesised to result from a giant impact stripping the outer silicate mantle. MESSENGER mission data confirmed water ice in permanently shadowed polar craters. The Caloris Basin (1,550 km diameter) is one of the largest impact structures in the Solar System, and its antipodal region shows chaotic terrain from focused seismic energy.",
         funFacts = listOf(
-            "A year on Mercury is only 88 Earth days.",
-            "Mercury has no moons and no rings.",
-            "Surface temperatures range from -180°C to 430°C.",
-            "Mercury is only slightly larger than Earth's Moon.",
-            "It has a large iron core making up about 85% of its radius."
+            "Mercury's core is proportionally the largest of any planet — 85% of its radius vs Earth's 54%.",
+            "The 3:2 spin-orbit resonance means a solar day on Mercury lasts 176 Earth days.",
+            "MESSENGER confirmed water ice in permanently shadowed polar craters despite 430 degree surface temps.",
+            "Mercury's magnetic dipole is offset 484 km northward from the geometric centre — still unexplained.",
+            "The Caloris Basin impact was so energetic it created antipodal chaotic terrain on the opposite hemisphere.",
+            "Mercury's exosphere is continuously replenished by solar wind sputtering of surface regolith."
         ),
         colorHex = 0xFFB5B5B5,
         distanceFromSun = "57.9M km",
@@ -34,38 +40,50 @@ val samplePlanets = listOf(
         gravity = "3.7 m/s²",
         temperature = "-180 to 430°C",
         orbitalPeriod = "88 days",
-        type = "Terrestrial"
+        type = "Terrestrial",
+        composition = "Iron-nickel core (85% radius), thin silicate mantle, heavily cratered crust",
+        atmosphere = "Exosphere only: Na, O, H, He, K — surface pressure ~10^-15 bar",
+        magneticField = "~1% of Earth's dipole field; anomalously offset northward by 484 km",
+        explorationHighlight = "MESSENGER (2011-2015) achieved 100% surface mapping; BepiColombo (ESA/JAXA) arrives 2025",
+        researchNote = "Core solidification dynamics, volatile delivery, and the origin of the offset dipole are open research problems"
     ),
     Planet(
         name = "Venus",
-        shortDescription = "The hottest planet, shrouded in thick toxic clouds.",
-        fullDescription = "Venus is the second planet from the Sun and is Earth's closest planetary neighbor. It's the hottest planet in our solar system, even though Mercury is closer to the Sun. Venus has a thick, toxic atmosphere filled with carbon dioxide and clouds of sulfuric acid. Its surface pressure is 90 times that of Earth.",
+        shortDescription = "A runaway greenhouse world with crushing pressure and sulfuric acid clouds.",
+        fullDescription = "Venus is the second planet from the Sun and the hottest in the Solar System despite not being the closest, due to a runaway greenhouse effect driven by a 96.5% CO2 atmosphere. Surface pressure reaches 92 bar — equivalent to 900 m depth in Earth's oceans. The planet rotates retrograde with a sidereal rotation period of 243.02 Earth days, longer than its orbital period of 224.7 days, meaning a Venusian solar day is 116.75 Earth days. Venus has no intrinsic magnetic field, suggesting a stagnant-lid tectonic regime with no active plate tectonics. Radar mapping by Magellan revealed over 1,600 major volcanic features. Recent reanalysis of Venera lander data and phosphine detection claims have reignited debate about possible atmospheric biosignatures.",
         funFacts = listOf(
-            "Venus rotates backwards compared to most planets.",
-            "A day on Venus is longer than a year on Venus.",
-            "Surface temperature reaches 465°C — hot enough to melt lead.",
-            "Venus is the brightest natural object in the night sky after the Moon.",
-            "It has over 1,600 major volcanoes on its surface."
+            "Venus's surface pressure of 92 bar would crush most spacecraft — only Soviet Venera landers survived briefly.",
+            "The retrograde rotation means the Sun rises in the west and sets in the east on Venus.",
+            "Venus has no magnetic field, exposing its atmosphere directly to solar wind erosion.",
+            "Magellan radar mapping revealed tessera terrain — ancient crustal plateaus of unknown origin.",
+            "Venus may have had liquid water oceans for up to 2 billion years before the greenhouse runaway.",
+            "The sulfuric acid cloud deck at 45-70 km altitude reflects 70% of incoming sunlight."
         ),
         colorHex = 0xFFE8C56A,
         distanceFromSun = "108.2M km",
         diameter = "12,104 km",
         moons = 0,
         gravity = "8.87 m/s²",
-        temperature = "465°C",
+        temperature = "465°C (surface)",
         orbitalPeriod = "225 days",
-        type = "Terrestrial"
+        type = "Terrestrial",
+        composition = "Iron-nickel core, silicate mantle, basaltic crust with extensive volcanic plains",
+        atmosphere = "96.5% CO2, 3.5% N2, trace SO2; sulfuric acid clouds at 45-70 km altitude",
+        magneticField = "No intrinsic field; induced magnetosphere from solar wind interaction",
+        explorationHighlight = "Magellan (1990-1994) radar-mapped 98% of surface; DAVINCI+ and VERITAS missions planned",
+        researchNote = "Stagnant-lid vs episodic resurfacing debate; possible atmospheric biosignatures under investigation"
     ),
     Planet(
         name = "Earth",
-        shortDescription = "Our home — the only known planet with life.",
-        fullDescription = "Earth is the third planet from the Sun and the only astronomical object known to harbor life. About 71% of Earth's surface is covered with water. Earth's atmosphere protects life from harmful solar radiation and keeps the planet warm enough to sustain liquid water. It has one natural satellite — the Moon.",
+        shortDescription = "The only known planet with active plate tectonics, liquid water oceans, and complex life.",
+        fullDescription = "Earth is the third planet from the Sun and the largest terrestrial planet, with a mean radius of 6,371 km. It is the only known body in the universe confirmed to harbour life. Earth's internal structure comprises a solid inner core (radius 1,220 km), liquid outer core (generating the geodynamo and magnetic field), mantle (silicate rock undergoing solid-state convection), and a thin crust. Active plate tectonics continuously recycles crustal material, regulates the carbon cycle, and drives mountain building. The hydrosphere covers 71% of the surface. Earth's large Moon — formed by a giant impact ~4.5 Ga — stabilises axial tilt (23.5°), moderating climate. The ozone layer (stratosphere, 15-35 km) absorbs UV radiation, enabling surface life.",
         funFacts = listOf(
-            "Earth is the densest planet in the solar system.",
-            "Earth's magnetic field protects us from solar wind.",
-            "The Moon stabilizes Earth's axial tilt, enabling stable seasons.",
-            "Earth is the only planet not named after a god.",
-            "One day on Earth is exactly 23 hours, 56 minutes, and 4 seconds."
+            "Earth's geodynamo generates a magnetic field that deflects ~99% of harmful solar wind particles.",
+            "Plate tectonics is unique among Solar System bodies and acts as a long-term carbon cycle thermostat.",
+            "The Moon formed from debris ejected when a Mars-sized body (Theia) collided with proto-Earth ~4.5 Ga.",
+            "Earth's inner core rotates slightly faster than the mantle — differential rotation of ~0.1 degrees per year.",
+            "The deep biosphere extends 5 km below the surface, harbouring microbial life in extreme conditions.",
+            "Earth's axial tilt of 23.5 degrees is stabilised by the Moon; without it, tilt could vary 0-85 degrees."
         ),
         colorHex = 0xFF4A90D9,
         distanceFromSun = "149.6M km",
@@ -74,18 +92,24 @@ val samplePlanets = listOf(
         gravity = "9.81 m/s²",
         temperature = "-88 to 58°C",
         orbitalPeriod = "365.25 days",
-        type = "Terrestrial"
+        type = "Terrestrial",
+        composition = "Iron-nickel core, peridotite mantle, basaltic/granitic crust, liquid water hydrosphere",
+        atmosphere = "78% N2, 21% O2, 0.04% CO2, trace noble gases; stratospheric ozone layer",
+        magneticField = "Dipole field ~25-65 microtesla; generated by liquid outer core convection (geodynamo)",
+        explorationHighlight = "Continuous satellite monitoring; ISS permanent crewed presence since 2000",
+        researchNote = "Climate feedback mechanisms, deep biosphere limits, and core differential rotation are active research areas"
     ),
     Planet(
         name = "Mars",
-        shortDescription = "The Red Planet — a cold desert world with the tallest volcano.",
-        fullDescription = "Mars is the fourth planet from the Sun and the second-smallest planet in the solar system. Often called the 'Red Planet' due to its reddish appearance caused by iron oxide on its surface. Mars has the tallest volcano and the longest canyon in the solar system. It is a primary target for future human exploration.",
+        shortDescription = "A geologically complex world with the Solar System's largest volcano and evidence of ancient habitability.",
+        fullDescription = "Mars is the fourth planet from the Sun with a mean radius of 3,389.5 km and a thin CO2 atmosphere (0.6% of Earth's surface pressure). The planet exhibits a striking hemispheric dichotomy: the southern highlands are ancient and heavily cratered (~4 Ga), while the northern lowlands are younger and smoother, possibly the floor of an ancient ocean (Oceanus Borealis hypothesis). Olympus Mons (21.9 km height, 600 km base diameter) is the largest volcano in the Solar System. Valles Marineris stretches 4,000 km and reaches 7 km depth. Geochemical evidence from orbiters and rovers confirms liquid water existed on the surface during the Noachian period (4.1-3.7 Ga). Recurring slope lineae and subsurface radar reflections suggest possible present-day liquid water. Mars has two small captured asteroids as moons: Phobos (destined to impact or form a ring in ~50 Myr) and Deimos.",
         funFacts = listOf(
-            "Olympus Mons on Mars is the tallest volcano in the solar system at 22 km high.",
-            "Mars has two small moons: Phobos and Deimos.",
-            "A Martian day (sol) is 24 hours and 37 minutes.",
-            "Mars has the largest dust storms in the solar system.",
-            "Evidence suggests Mars once had liquid water on its surface."
+            "Olympus Mons is 2.5 times the height of Everest and so wide its base would cover France.",
+            "Valles Marineris is as long as the continental United States and four times deeper than the Grand Canyon.",
+            "MAVEN data shows Mars lost most of its atmosphere to solar wind stripping after its magnetic field collapsed ~4 Ga.",
+            "Perseverance rover detected organic molecules and produced oxygen from CO2 via the MOXIE experiment.",
+            "Phobos orbits Mars faster than Mars rotates and will either crash or form a ring in ~50 million years.",
+            "Mars has the largest dust storms in the Solar System — global storms can last months and cover the entire planet."
         ),
         colorHex = 0xFFD45F2E,
         distanceFromSun = "227.9M km",
@@ -94,18 +118,24 @@ val samplePlanets = listOf(
         gravity = "3.72 m/s²",
         temperature = "-125 to 20°C",
         orbitalPeriod = "687 days",
-        type = "Terrestrial"
+        type = "Terrestrial",
+        composition = "Iron-sulfide core, silicate mantle, basaltic crust rich in iron oxides (hematite, goethite)",
+        atmosphere = "95.3% CO2, 2.7% N2, 1.6% Ar; surface pressure 0.6% of Earth's",
+        magneticField = "No global field; crustal remnant magnetism in southern highlands from ancient dynamo",
+        explorationHighlight = "Perseverance rover (2021-present) caching samples for Mars Sample Return; Ingenuity helicopter",
+        researchNote = "Subsurface liquid water, methane seasonality, and ancient habitability are primary astrobiology targets"
     ),
     Planet(
         name = "Jupiter",
-        shortDescription = "The largest planet — a giant storm world with 95 moons.",
-        fullDescription = "Jupiter is the fifth planet from the Sun and the largest in the solar system. It is a gas giant with a mass more than twice that of all the other planets combined. Jupiter's iconic Great Red Spot is a storm that has been raging for hundreds of years. Its powerful gravity acts as a shield for the inner solar system.",
+        shortDescription = "The Solar System's largest planet — a failed star with a complex magnetosphere and 95 known moons.",
+        fullDescription = "Jupiter is the fifth planet and the largest in the Solar System, with a mass 317.8 times Earth's and 2.5 times all other planets combined. It is a gas giant composed primarily of hydrogen and helium, with no solid surface. The interior transitions from molecular hydrogen to metallic hydrogen at ~1 Mbar pressure, where hydrogen becomes electrically conducting and drives the most powerful planetary magnetosphere in the Solar System (extending 7 million km sunward). The Great Red Spot is an anticyclonic storm larger than Earth, observed continuously since 1831. Jupiter's four Galilean moons — Io, Europa, Ganymede, Callisto — are geologically diverse: Io is the most volcanically active body in the Solar System; Europa harbours a subsurface liquid water ocean beneath its ice shell, making it a prime astrobiology target. Jupiter acts as a gravitational shield, deflecting or capturing comets and asteroids that might otherwise strike the inner Solar System.",
         funFacts = listOf(
-            "Jupiter's Great Red Spot is a storm larger than Earth.",
-            "Jupiter has 95 known moons, including the four large Galilean moons.",
-            "A day on Jupiter is only about 10 hours long.",
-            "Jupiter acts as a cosmic vacuum cleaner, protecting inner planets from asteroids.",
-            "Jupiter emits more heat than it receives from the Sun."
+            "Jupiter's metallic hydrogen interior generates a magnetosphere 20,000 times stronger than Earth's.",
+            "Europa's subsurface ocean contains more liquid water than all of Earth's oceans combined.",
+            "Io experiences tidal heating so intense it produces 100 times more volcanic heat flux than Earth.",
+            "Jupiter's Great Red Spot has been shrinking — from 40,000 km wide in the 1800s to ~13,000 km today.",
+            "Ganymede is larger than Mercury and is the only moon in the Solar System with its own magnetic field.",
+            "Jupiter emits 1.67 times more energy than it receives from the Sun due to Kelvin-Helmholtz contraction."
         ),
         colorHex = 0xFFD4A96A,
         distanceFromSun = "778.5M km",
@@ -114,18 +144,24 @@ val samplePlanets = listOf(
         gravity = "24.79 m/s²",
         temperature = "-108°C (cloud top)",
         orbitalPeriod = "11.86 years",
-        type = "Gas Giant"
+        type = "Gas Giant",
+        composition = "~75% H2, ~24% He by mass; metallic hydrogen mantle; possible rocky/icy core 10-40 Earth masses",
+        atmosphere = "Ammonia ice clouds, ammonium hydrosulfide clouds, water clouds at depth; zonal jet streams",
+        magneticField = "Dipole moment 20,000x Earth's; magnetosphere extends 7M km sunward, 700M km tailward",
+        explorationHighlight = "Juno spacecraft (2016-present) mapping interior structure; Europa Clipper launches 2024",
+        researchNote = "Core composition, metallic hydrogen properties, and Europa ocean habitability are key open questions"
     ),
     Planet(
         name = "Saturn",
-        shortDescription = "The ringed jewel of the solar system.",
-        fullDescription = "Saturn is the sixth planet from the Sun and the second-largest in the solar system. It is a gas giant best known for its stunning ring system, which is made up of ice and rock particles ranging in size from tiny grains to house-sized chunks. Saturn is the least dense planet in the solar system.",
+        shortDescription = "The ringed jewel — a low-density gas giant with the most complex ring system in the Solar System.",
+        fullDescription = "Saturn is the sixth planet and second-largest in the Solar System, with a mean density of 687 kg/m³ — less than water. Its iconic ring system spans 282,000 km in diameter but averages only 10-20 m in thickness, composed of 93% water ice with silicate and iron oxide contaminants. The rings are divided into named groups (A, B, C, D, E, F, G) separated by resonance gaps such as the Cassini Division (4,800 km wide), cleared by the 2:1 orbital resonance with Mimas. Saturn has 146 confirmed moons. Titan, the largest, has a dense nitrogen atmosphere (1.5 bar surface pressure), methane lakes and rivers, and a possible subsurface water ocean — making it a unique prebiotic chemistry laboratory. Enceladus ejects water vapour and ice particles from its south polar geysers, feeding Saturn's E ring and revealing a subsurface liquid water ocean with hydrothermal activity.",
         funFacts = listOf(
-            "Saturn's rings are made of ice and rock, spanning up to 282,000 km.",
-            "Saturn is the least dense planet — it could float on water.",
-            "Saturn has 146 known moons, including Titan with a thick atmosphere.",
-            "Winds on Saturn can reach 1,800 km/h.",
-            "Saturn takes 29.5 Earth years to orbit the Sun."
+            "Saturn's rings are geologically young — likely 10-100 million years old, not primordial.",
+            "Enceladus geysers eject water at 1,400 m/s, and Cassini detected H2, CO2, and organic molecules in the plume.",
+            "Titan's methane cycle mirrors Earth's water cycle — evaporation, clouds, rain, rivers, and lakes.",
+            "Saturn's hexagonal polar vortex is a standing wave 30,000 km across, stable for decades.",
+            "The Cassini Division gap in the rings is maintained by a 2:1 orbital resonance with the moon Mimas.",
+            "Saturn radiates 2.3 times more energy than it receives, partly from helium rain in the interior."
         ),
         colorHex = 0xFFF4D03F,
         distanceFromSun = "1.43B km",
@@ -134,46 +170,63 @@ val samplePlanets = listOf(
         gravity = "10.44 m/s²",
         temperature = "-139°C (cloud top)",
         orbitalPeriod = "29.5 years",
-        type = "Gas Giant"
+        type = "Gas Giant",
+        composition = "~75% H2, ~25% He; possible rocky core; metallic hydrogen layer less extensive than Jupiter's",
+        atmosphere = "Ammonia ice clouds; zonal winds up to 1,800 km/h; persistent hexagonal north polar vortex",
+        magneticField = "Dipole aligned within 0.06 degrees of rotation axis — uniquely symmetric among planets",
+        explorationHighlight = "Cassini-Huygens (2004-2017) revolutionised understanding of rings, Titan, and Enceladus",
+        researchNote = "Ring age and origin, Titan prebiotic chemistry, and Enceladus hydrothermal habitability are active fields"
     ),
     Planet(
         name = "Uranus",
-        shortDescription = "The ice giant that rotates on its side.",
-        fullDescription = "Uranus is the seventh planet from the Sun and an ice giant whose interior is mainly composed of icy materials. It rotates on its side with an axial tilt of 98 degrees, likely the result of a massive collision early in the solar system's history. It has 13 known rings and 28 known moons.",
+        shortDescription = "An ice giant with a 98-degree axial tilt, complex ring system, and extreme seasonal cycles.",
+        fullDescription = "Uranus is the seventh planet and first discovered by telescope (William Herschel, 1781). It is classified as an ice giant — its interior is dominated by a hot, dense fluid of water, methane, and ammonia ices rather than hydrogen-helium gas. The planet's axial tilt of 97.77 degrees causes extreme seasons: each pole experiences 42 years of continuous sunlight followed by 42 years of darkness. This tilt is hypothesised to result from a collision with an Earth-sized body during the late heavy bombardment. Uranus has 13 known rings (narrow and dark, composed of macroscopic particles) and 28 known moons, all named after Shakespearean characters. The planet emits almost no internal heat — a major unsolved problem in planetary science — suggesting an internal thermal barrier. Voyager 2 (1986) remains the only spacecraft to visit Uranus.",
         funFacts = listOf(
-            "Uranus rotates on its side — its axial tilt is 98 degrees.",
-            "Uranus has 13 known rings and 28 known moons.",
-            "It is the coldest planetary atmosphere in the solar system at -224°C.",
-            "Uranus was the first planet discovered with a telescope, in 1781.",
-            "A year on Uranus equals 84 Earth years."
+            "Uranus emits almost no internal heat flux — unlike all other giant planets — suggesting a thermal stratification layer.",
+            "The 97.77 degree axial tilt means Uranus essentially rolls around the Sun on its side.",
+            "Miranda, a moon of Uranus, has Verona Rupes — a cliff 20 km high, the tallest known in the Solar System.",
+            "Uranus's rings were discovered in 1977 when the planet occulted a star and the rings caused symmetric dips.",
+            "The interior 'ice' is not frozen — it is a hot, supercritical fluid at temperatures exceeding 5,000 K.",
+            "A Uranus orbiter and probe mission is the top priority of the 2023-2032 Planetary Science Decadal Survey."
         ),
         colorHex = 0xFF7DE8E8,
         distanceFromSun = "2.87B km",
         diameter = "50,724 km",
         moons = 28,
         gravity = "8.69 m/s²",
-        temperature = "-224°C",
+        temperature = "-224°C (cloud top)",
         orbitalPeriod = "84 years",
-        type = "Ice Giant"
+        type = "Ice Giant",
+        composition = "Water, methane, ammonia ices (~80% by mass); H2-He envelope; possible rocky core",
+        atmosphere = "83% H2, 15% He, 2.3% CH4; methane absorbs red light giving cyan colour",
+        magneticField = "Offset 59 degrees from rotation axis and displaced 1/3 of planetary radius from centre",
+        explorationHighlight = "Voyager 2 flyby (1986) only visit; Uranus Orbiter and Probe mission recommended for 2030s",
+        researchNote = "Anomalous heat flow, off-axis magnetic field origin, and interior structure are major open problems"
     ),
     Planet(
         name = "Neptune",
-        shortDescription = "The windiest planet — a dark, cold, supersonic world.",
-        fullDescription = "Neptune is the eighth and farthest known planet from the Sun. It is an ice giant with the strongest winds in the solar system, reaching up to 2,100 km/h. Neptune was predicted mathematically before it was directly observed, making it the only planet found through mathematical prediction rather than observation.",
+        shortDescription = "The windiest planet — predicted mathematically before observation, with a dynamic atmosphere and active moon Triton.",
+        fullDescription = "Neptune is the eighth and outermost planet, discovered in 1846 through mathematical prediction by Le Verrier and Adams based on perturbations of Uranus's orbit — the only planet found this way. It is an ice giant with the strongest sustained winds in the Solar System, reaching 2,100 km/h in its upper atmosphere. The Great Dark Spot observed by Voyager 2 in 1989 had disappeared by the time Hubble observed Neptune in 1994, demonstrating rapid atmospheric evolution. Neptune has 16 known moons; Triton is unique — it orbits retrograde, indicating it is a captured Kuiper Belt Object. Triton has active nitrogen geysers and is slowly spiralling inward, destined to be tidally disrupted in ~3.6 billion years. Neptune's internal heat flux (2.61 W/m²) is the highest of the ice giants, driving its dynamic weather despite receiving only 1/900th of Earth's solar flux.",
         funFacts = listOf(
-            "Neptune has the strongest winds in the solar system — up to 2,100 km/h.",
-            "Neptune has 16 known moons; the largest is Triton.",
-            "Neptune was predicted mathematically before it was observed.",
-            "A year on Neptune is 165 Earth years.",
-            "Neptune's Great Dark Spot was a storm the size of Earth."
+            "Neptune was found by mathematics alone — Le Verrier predicted its position to within 1 degree in 1846.",
+            "Triton's retrograde orbit proves it is a captured Kuiper Belt Object, not a native moon.",
+            "Neptune's winds reach 2,100 km/h — supersonic relative to its own sound speed in the atmosphere.",
+            "The Great Dark Spot seen in 1989 had completely vanished by 1994 — atmospheric storms form and dissipate rapidly.",
+            "Triton has active nitrogen geysers erupting 8 km high, driven by solar heating of subsurface nitrogen ice.",
+            "Neptune's internal heat output is 2.61 W/m² — higher than Uranus despite being further from the Sun."
         ),
         colorHex = 0xFF4169E1,
         distanceFromSun = "4.5B km",
         diameter = "49,244 km",
         moons = 16,
         gravity = "11.15 m/s²",
-        temperature = "-214°C",
+        temperature = "-214°C (cloud top)",
         orbitalPeriod = "165 years",
-        type = "Ice Giant"
+        type = "Ice Giant",
+        composition = "Water, ammonia, methane ices; H2-He envelope; silicate-iron core ~1.2 Earth masses",
+        atmosphere = "80% H2, 19% He, 1.5% CH4; discrete cloud features; fastest planetary winds in Solar System",
+        magneticField = "Offset 47 degrees from rotation axis; complex multipolar structure",
+        explorationHighlight = "Voyager 2 flyby (1989) only visit; no dedicated mission currently approved",
+        researchNote = "Interior heat source, Triton's subsurface ocean potential, and Kuiper Belt capture dynamics are open questions"
     )
 )

@@ -271,12 +271,7 @@ fun PlanetDetailScreen(planet: Planet) {
                             borderColor = SpaceGold.copy(alpha = 0.4f)
                         ) {
                             Column(modifier = Modifier.padding(18.dp)) {
-                                Text(
-                                    text = "Fun Facts",
-                                    color = SpaceGold,
-                                    fontSize = 16.sp,
-                                    fontWeight = FontWeight.Bold
-                                )
+                                Text("Scientific Facts", color = SpaceGold, fontSize = 16.sp, fontWeight = FontWeight.Bold)
                                 Spacer(modifier = Modifier.height(12.dp))
                                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                                     planet.funFacts.forEachIndexed { index, fact ->
@@ -291,24 +286,63 @@ fun PlanetDetailScreen(planet: Planet) {
                                                     .border(1.dp, SpaceGold.copy(alpha = 0.5f), CircleShape),
                                                 contentAlignment = Alignment.Center
                                             ) {
-                                                Text(
-                                                    text = "${index + 1}",
-                                                    color = SpaceGold,
-                                                    fontSize = 11.sp,
-                                                    fontWeight = FontWeight.Bold
-                                                )
+                                                Text("${index + 1}", color = SpaceGold, fontSize = 11.sp, fontWeight = FontWeight.Bold)
                                             }
-                                            Text(
-                                                text = fact,
-                                                color = StarWhite.copy(alpha = 0.8f),
-                                                fontSize = 13.sp,
-                                                lineHeight = 20.sp,
-                                                modifier = Modifier.weight(1f)
-                                            )
+                                            Text(fact, color = StarWhite.copy(alpha = 0.85f), fontSize = 13.sp, lineHeight = 20.sp, modifier = Modifier.weight(1f))
                                         }
                                     }
                                 }
                             }
+                        }
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        // Composition & Atmosphere
+                        if (planet.composition.isNotBlank()) {
+                            GlassCard(modifier = Modifier.fillMaxWidth(), borderColor = SpaceCyan.copy(0.35f)) {
+                                Column(modifier = Modifier.padding(18.dp)) {
+                                    Text("Composition", color = SpaceCyan, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                    Text(planet.composition, color = StarWhite.copy(0.8f), fontSize = 13.sp, lineHeight = 20.sp)
+                                    if (planet.atmosphere.isNotBlank()) {
+                                        Spacer(modifier = Modifier.height(12.dp))
+                                        Text("Atmosphere", color = SpaceCyan, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+                                        Spacer(modifier = Modifier.height(8.dp))
+                                        Text(planet.atmosphere, color = StarWhite.copy(0.8f), fontSize = 13.sp, lineHeight = 20.sp)
+                                    }
+                                }
+                            }
+                            Spacer(modifier = Modifier.height(16.dp))
+                        }
+
+                        // Magnetic field + Exploration
+                        if (planet.magneticField.isNotBlank()) {
+                            GlassCard(modifier = Modifier.fillMaxWidth(), borderColor = SpacePurpleLight.copy(0.35f)) {
+                                Column(modifier = Modifier.padding(18.dp)) {
+                                    Text("Magnetic Field", color = SpacePurpleLight, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                    Text(planet.magneticField, color = StarWhite.copy(0.8f), fontSize = 13.sp, lineHeight = 20.sp)
+                                    if (planet.explorationHighlight.isNotBlank()) {
+                                        Spacer(modifier = Modifier.height(12.dp))
+                                        Text("Exploration", color = SpacePurpleLight, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+                                        Spacer(modifier = Modifier.height(8.dp))
+                                        Text(planet.explorationHighlight, color = StarWhite.copy(0.8f), fontSize = 13.sp, lineHeight = 20.sp)
+                                    }
+                                }
+                            }
+                            Spacer(modifier = Modifier.height(16.dp))
+                        }
+
+                        // Research note
+                        if (planet.researchNote.isNotBlank()) {
+                            GlassCard(modifier = Modifier.fillMaxWidth(), borderColor = SpaceOrange.copy(0.35f)) {
+                                Column(modifier = Modifier.padding(18.dp)) {
+                                    Text("Open Research Questions", color = SpaceOrange, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                    Text(planet.researchNote, color = StarWhite.copy(0.8f), fontSize = 13.sp, lineHeight = 20.sp)
+                                }
+                            }
+                            Spacer(modifier = Modifier.height(16.dp))
                         }
 
                         Spacer(modifier = Modifier.height(32.dp))

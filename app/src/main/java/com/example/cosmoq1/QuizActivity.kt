@@ -4,11 +4,11 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.animation.*
 import androidx.compose.animation.core.*
-import androidx.compose.foundation.*
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -16,24 +16,25 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.scale
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.graphics.drawscope.rotate
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.cosmoq1.data.QuizQuestion
-import com.example.cosmoq1.ui.components.GlassCard
-import com.example.cosmoq1.ui.components.SpaceGradientBackground
 import com.example.cosmoq1.ui.theme.*
-import com.example.cosmoq1.viewmodel.QuizViewModel
 import kotlinx.coroutines.delay
+import kotlin.math.abs
+import kotlin.math.cos
+import kotlin.math.sin
+import kotlin.math.sqrt
+import kotlin.random.Random
 
 class QuizActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -41,7 +42,349 @@ class QuizActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             CosmicExplorerTheme {
-                QuizScreen()
+                SpaceShooterScreen()
+            }
+        }
+    }
+}
+
+// ---- Game data classes ----
+
+data class Bullet(val id: Int, var x: Float, var y: Float)
+data class Asteroid(val id: Int, var x: Float, var y: Float, val size: Float, val speed: Float, val angle: Float)
+data class Particle(val id: Int, var x: Float, var y: Float, var vx: Float, var vy: Float, var life: Float, val color: Color)
+data class Star(val x: Float, val y: Float, val r: Float, val alpha: Float)
+
+enum class GameState { IDLE, PLAYING, GAME_OVER }
+
+// ---- Main composable ----
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun SpaceShooterScreen() {
+    val context = LocalContext.current
+
+    var gameState by remember { mutableStateOf(GameState.IDLE) }
+    var score by remember { mutableIntStateOf(0) }
+    var lives by remember { mutableIntStateOf(3) }
+    var highScore by remember { mutableIntStateOf(0) }
+
+    // Ship position (0..1 normalized x)
+    var shipX by remember { mutableFloatStateOf(0.5f) }
+
+    // Game objects
+    val bullets    = remember { mutableStateListOf<Bullet>() }
+    val asteroids  = remember { mutableStateListOf<Asteroid>() }
+    val particles  = remember { mutableStateListOf<Particle>() }
+    val stars      = remember { List(80) { Star(Random.nextFloat(), Random.nextFloat(), Random.nextFloat() * 2f + 0.5f, Random.nextFloat() * 0.7f + 0.3f) } }
+
+    var bulletIdCounter  by remember { mutableIntStateOf(0) }
+    var asteroidIdCounter by remember { mutableIntStateOf(0) }
+    var particleIdCounter by remember { mutableIntStateOf(0) }
+
+    // Auto-fire timer
+    var autoFireTick by remember { mutableIntStateOf(0) }
+
+    // Game loop — 60fps tick
+    LaunchedEffect(gameState) {
+        if (gameState != GameState.PLAYING) return@LaunchedEffect
+
+        while (gameState == GameState.PLAYING) {
+            delay(16L) // ~60fps
+
+            // Auto-fire every 20 ticks
+            autoFireTick++
+            if (autoFireTick >= 20) {
+                autoFireTick = 0
+                bullets.add(Bullet(bulletIdCounter++, shipX, 0.88f))
+            }
+
+            // Move bullets up
+            val bulletsToRemove = mutableListOf<Bullet>()
+            bullets.forEach { b ->
+                b.y -= 0.025f
+                if (b.y < 0f) bulletsToRemove.add(b)
+            }
+            bullets.removeAll(bulletsToRemove)
+
+            // Spawn asteroids
+            if (Random.nextFloat() < 0.025f + score * 0.0002f) {
+                asteroids.add(
+                    Asteroid(
+                        id    = asteroidIdCounter++,
+                        x     = Random.nextFloat(),
+                        y     = -0.05f,
+                        size  = Random.nextFloat() * 0.04f + 0.025f,
+                        speed = Random.nextFloat() * 0.006f + 0.004f,
+                        angle = Random.nextFloat() * 360f
+                    )
+                )
+            }
+
+            // Move asteroids down
+            val asteroidsToRemove = mutableListOf<Asteroid>()
+            asteroids.forEach { a ->
+                a.y += a.speed
+                if (a.y > 1.1f) asteroidsToRemove.add(a)
+            }
+            asteroids.removeAll(asteroidsToRemove)
+
+            // Collision: bullet vs asteroid
+            val hitBullets    = mutableSetOf<Int>()
+            val hitAsteroids  = mutableSetOf<Int>()
+            bullets.forEach { b ->
+                asteroids.forEach { a ->
+                    val dx = b.x - a.x
+                    val dy = b.y - a.y
+                    if (sqrt(dx * dx + dy * dy) < a.size + 0.02f) {
+                        hitBullets.add(b.id)
+                        hitAsteroids.add(a.id)
+                        score++
+                        // Spawn explosion particles
+                        repeat(8) {
+                            val angle = Random.nextFloat() * 360f
+                            val speed = Random.nextFloat() * 0.012f + 0.004f
+                            particles.add(
+                                Particle(
+                                    id    = particleIdCounter++,
+                                    x     = a.x,
+                                    y     = a.y,
+                                    vx    = cos(Math.toRadians(angle.toDouble())).toFloat() * speed,
+                                    vy    = sin(Math.toRadians(angle.toDouble())).toFloat() * speed,
+                                    life  = 1f,
+                                    color = listOf(SpaceOrange, SpaceGold, SpaceRed, Color.White).random()
+                                )
+                            )
+                        }
+                    }
+                }
+            }
+            bullets.removeAll { it.id in hitBullets }
+            asteroids.removeAll { it.id in hitAsteroids }
+
+            // Collision: asteroid vs ship
+            val shipY = 0.88f
+            val shipHitRadius = 0.04f
+            val shipHitAsteroids = mutableSetOf<Int>()
+            asteroids.forEach { a ->
+                val dx = a.x - shipX
+                val dy = a.y - shipY
+                if (sqrt(dx * dx + dy * dy) < a.size + shipHitRadius) {
+                    shipHitAsteroids.add(a.id)
+                    lives--
+                    if (lives <= 0) {
+                        gameState = GameState.GAME_OVER
+                        if (score > highScore) highScore = score
+                    }
+                }
+            }
+            asteroids.removeAll { it.id in shipHitAsteroids }
+
+            // Update particles
+            val deadParticles = mutableListOf<Particle>()
+            particles.forEach { p ->
+                p.x    += p.vx
+                p.y    += p.vy
+                p.life -= 0.04f
+                if (p.life <= 0f) deadParticles.add(p)
+            }
+            particles.removeAll(deadParticles)
+        }
+    }
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color(0xFF000010))
+    ) {
+        // Game canvas
+        Canvas(
+            modifier = Modifier
+                .fillMaxSize()
+                .pointerInput(gameState) {
+                    if (gameState == GameState.PLAYING) {
+                        detectDragGestures { _, drag ->
+                            shipX = (shipX + drag.x / size.width).coerceIn(0.05f, 0.95f)
+                        }
+                    }
+                }
+        ) {
+            val w = size.width
+            val h = size.height
+
+            // Stars
+            stars.forEach { s ->
+                drawCircle(Color.White.copy(alpha = s.alpha), s.r, Offset(s.x * w, s.y * h))
+            }
+
+            if (gameState == GameState.PLAYING || gameState == GameState.GAME_OVER) {
+                // Bullets
+                bullets.forEach { b ->
+                    drawRect(
+                        color  = SpaceCyan,
+                        topLeft = Offset(b.x * w - 3f, b.y * h - 12f),
+                        size   = Size(6f, 18f)
+                    )
+                    // Bullet glow
+                    drawCircle(SpaceCyan.copy(0.3f), 10f, Offset(b.x * w, b.y * h))
+                }
+
+                // Asteroids
+                asteroids.forEach { a ->
+                    drawAsteroid(a, w, h)
+                }
+
+                // Particles
+                particles.forEach { p ->
+                    drawCircle(p.color.copy(alpha = p.life), 5f * p.life, Offset(p.x * w, p.y * h))
+                }
+
+                // Ship
+                drawShip(shipX * w, 0.88f * h)
+            }
+        }
+
+        // HUD overlay
+        when (gameState) {
+            GameState.IDLE -> IdleOverlay(
+                highScore = highScore,
+                onStart = {
+                    score = 0; lives = 3
+                    bullets.clear(); asteroids.clear(); particles.clear()
+                    shipX = 0.5f; autoFireTick = 0
+                    gameState = GameState.PLAYING
+                }
+            )
+            GameState.PLAYING -> PlayingHud(
+                score = score,
+                lives = lives,
+                onBack = { (context as? QuizActivity)?.finish() }
+            )
+            GameState.GAME_OVER -> GameOverOverlay(
+                score = score,
+                highScore = highScore,
+                onRestart = {
+                    score = 0; lives = 3
+                    bullets.clear(); asteroids.clear(); particles.clear()
+                    shipX = 0.5f; autoFireTick = 0
+                    gameState = GameState.PLAYING
+                },
+                onBack = { (context as? QuizActivity)?.finish() }
+            )
+        }
+    }
+}
+
+// ---- Draw helpers ----
+
+fun DrawScope.drawShip(cx: Float, cy: Float) {
+    // Engine glow
+    drawCircle(SpaceCyan.copy(0.25f), 28f, Offset(cx, cy + 14f))
+    // Body
+    val path = androidx.compose.ui.graphics.Path().apply {
+        moveTo(cx, cy - 28f)
+        lineTo(cx - 18f, cy + 20f)
+        lineTo(cx, cy + 10f)
+        lineTo(cx + 18f, cy + 20f)
+        close()
+    }
+    drawPath(path, Brush.verticalGradient(listOf(SpaceCyan, SpacePurpleLight), cy - 28f, cy + 20f))
+    // Cockpit
+    drawCircle(Color.White.copy(0.9f), 5f, Offset(cx, cy - 10f))
+    // Left wing
+    val leftWing = androidx.compose.ui.graphics.Path().apply {
+        moveTo(cx - 18f, cy + 20f)
+        lineTo(cx - 32f, cy + 28f)
+        lineTo(cx - 10f, cy + 8f)
+        close()
+    }
+    drawPath(leftWing, SpacePurple.copy(0.8f))
+    // Right wing
+    val rightWing = androidx.compose.ui.graphics.Path().apply {
+        moveTo(cx + 18f, cy + 20f)
+        lineTo(cx + 32f, cy + 28f)
+        lineTo(cx + 10f, cy + 8f)
+        close()
+    }
+    drawPath(rightWing, SpacePurple.copy(0.8f))
+    // Thruster flame
+    drawCircle(SpaceOrange.copy(0.7f), 8f, Offset(cx, cy + 22f))
+    drawCircle(SpaceGold.copy(0.5f), 4f, Offset(cx, cy + 26f))
+}
+
+fun DrawScope.drawAsteroid(a: Asteroid, w: Float, h: Float) {
+    val cx = a.x * w
+    val cy = a.y * h
+    val r  = a.size * w
+    rotate(a.angle, Offset(cx, cy)) {
+        val path = androidx.compose.ui.graphics.Path().apply {
+            val pts = 7
+            for (i in 0 until pts) {
+                val angle = (i.toFloat() / pts) * 360f
+                val rad   = r * (0.7f + Random.nextFloat() * 0.3f)
+                val px    = cx + cos(Math.toRadians(angle.toDouble())).toFloat() * rad
+                val py    = cy + sin(Math.toRadians(angle.toDouble())).toFloat() * rad
+                if (i == 0) moveTo(px, py) else lineTo(px, py)
+            }
+            close()
+        }
+        drawPath(path, Brush.radialGradient(listOf(Color(0xFF8B7355), Color(0xFF4A3728)), Offset(cx, cy), r))
+        drawPath(path, Color(0xFF6B5A45).copy(0.5f), style = androidx.compose.ui.graphics.drawscope.Stroke(2f))
+    }
+}
+
+// ---- UI overlays ----
+
+@Composable
+fun IdleOverlay(highScore: Int, onStart: () -> Unit) {
+    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+            modifier = Modifier.padding(32.dp)
+        ) {
+            Text(
+                "SPACE SHOOTER",
+                color = SpaceCyan,
+                fontSize = 32.sp,
+                fontWeight = FontWeight.Black,
+                letterSpacing = 4.sp,
+                textAlign = TextAlign.Center
+            )
+            Text(
+                "Drag to move your ship\nDestroy asteroids to score",
+                color = StarWhite.copy(0.65f),
+                fontSize = 14.sp,
+                textAlign = TextAlign.Center,
+                lineHeight = 22.sp
+            )
+            if (highScore > 0) {
+                Text(
+                    "Best: $highScore",
+                    color = SpaceGold,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+            Spacer(modifier = Modifier.height(8.dp))
+            Button(
+                onClick = onStart,
+                colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
+                contentPadding = PaddingValues(0.dp),
+                shape = RoundedCornerShape(16.dp),
+                modifier = Modifier.fillMaxWidth(0.6f).height(52.dp)
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(
+                            Brush.horizontalGradient(listOf(SpaceAccentBlue, SpaceCyan)),
+                            RoundedCornerShape(16.dp)
+                        ),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text("LAUNCH", color = Color.Black, fontWeight = FontWeight.Black, fontSize = 16.sp, letterSpacing = 2.sp)
+                }
             }
         }
     }
@@ -49,374 +392,70 @@ class QuizActivity : ComponentActivity() {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun QuizScreen(vm: QuizViewModel = viewModel()) {
-    val context = LocalContext.current
-    val state by vm.uiState.collectAsStateWithLifecycle()
-
-    SpaceGradientBackground {
-        Scaffold(
-            topBar = {
-                TopAppBar(
-                    title = { Text("Space Quiz", fontWeight = FontWeight.Bold, color = StarWhite) },
-                    navigationIcon = {
-                        IconButton(onClick = { (context as? QuizActivity)?.finish() }) {
-                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = SpacePurpleLight)
-                        }
-                    },
-                    colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
-                )
+fun PlayingHud(score: Int, lives: Int, onBack: () -> Unit) {
+    Column(modifier = Modifier.fillMaxSize()) {
+        TopAppBar(
+            title = {
+                Row(horizontalArrangement = Arrangement.spacedBy(16.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Text("Score: $score", color = SpaceCyan, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                    Text(
+                        buildString { repeat(lives) { append("* ") } }.trim(),
+                        color = SpaceRed,
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
             },
-            containerColor = Color.Transparent
-        ) { innerPadding ->
-            if (state.questions.isEmpty()) {
-                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator(color = SpaceCyan)
+            navigationIcon = {
+                IconButton(onClick = onBack) {
+                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = SpaceCyan)
                 }
-                return@Scaffold
-            }
-
-            if (state.isFinished) {
-                QuizResultScreen(
-                    score = state.score,
-                    total = state.questions.size,
-                    onRestart = vm::restartQuiz,
-                    modifier = Modifier.padding(innerPadding)
-                )
-            } else {
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(innerPadding)
-                        .padding(horizontal = 20.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    QuizProgressBar(
-                        current = state.currentIndex,
-                        total = state.questions.size,
-                        score = state.score
-                    )
-
-                    Spacer(modifier = Modifier.height(20.dp))
-
-                    AnimatedContent(
-                        targetState = state.currentIndex,
-                        transitionSpec = {
-                            (slideInHorizontally(tween(350)) { it } + fadeIn(tween(350)))
-                                .togetherWith(slideOutHorizontally(tween(350)) { -it } + fadeOut(tween(200)))
-                        },
-                        label = "questionAnim"
-                    ) { index ->
-                        QuestionCard(question = state.questions[index])
-                    }
-
-                    Spacer(modifier = Modifier.height(20.dp))
-
-                    AnimatedContent(
-                        targetState = state.currentIndex,
-                        transitionSpec = {
-                            (fadeIn(tween(400)) + slideInHorizontally(tween(400)) { it / 2 })
-                                .togetherWith(fadeOut(tween(200)))
-                        },
-                        label = "optionsAnim"
-                    ) { index ->
-                        AnswerOptions(
-                            question = state.questions[index],
-                            selectedAnswer = state.selectedAnswer,
-                            correctIndex = state.questions[index].correctIndex,
-                            onAnswerSelected = vm::selectAnswer
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.height(14.dp))
-
-                    AnimatedVisibility(
-                        visible = state.showFeedback,
-                        enter = fadeIn(tween(300)) + expandVertically(tween(300))
-                    ) {
-                        FeedbackBanner(
-                            message = state.feedbackMessage,
-                            isCorrect = state.isCorrect
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.weight(1f))
-
-                    AnimatedVisibility(visible = state.showFeedback) {
-                        val isLast = state.currentIndex == state.questions.size - 1
-                        CosmicButton(
-                            text = if (isLast) "See Results" else "Next Question",
-                            gradient = Brush.horizontalGradient(listOf(SpacePurple, SpaceCyan.copy(0.8f))),
-                            onClick = vm::nextQuestion,
-                            modifier = Modifier.fillMaxWidth()
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.height(24.dp))
-                }
-            }
-        }
+            },
+            colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Black.copy(0.5f))
+        )
     }
 }
 
 @Composable
-fun QuizProgressBar(current: Int, total: Int, score: Int) {
-    val progress = (current + 1).toFloat() / total.toFloat()
-    val animatedProgress by animateFloatAsState(
-        targetValue = progress,
-        animationSpec = tween(600),
-        label = "quizProgress"
-    )
-
-    Column(modifier = Modifier.fillMaxWidth()) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Text(
-                "Question ${current + 1} / $total",
-                color = StarWhite.copy(alpha = 0.7f),
-                fontSize = 13.sp
-            )
-            Text(
-                "Score: $score",
-                color = SpaceGold,
-                fontSize = 13.sp,
-                fontWeight = FontWeight.Bold
-            )
-        }
-        Spacer(modifier = Modifier.height(8.dp))
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(8.dp)
-                .clip(RoundedCornerShape(4.dp))
-                .background(CardBackground)
-        ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth(animatedProgress)
-                    .fillMaxHeight()
-                    .background(
-                        Brush.horizontalGradient(listOf(SpacePurple, SpaceCyan)),
-                        RoundedCornerShape(4.dp)
-                    )
-            )
-        }
-    }
-}
-
-@Composable
-fun QuestionCard(question: QuizQuestion) {
-    GlassCard(
-        modifier = Modifier.fillMaxWidth(),
-        cornerRadius = 20.dp,
-        borderColor = SpacePurple.copy(alpha = 0.5f)
-    ) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(24.dp),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                text = question.question,
-                color = StarWhite,
-                fontSize = 19.sp,
-                fontWeight = FontWeight.SemiBold,
-                textAlign = TextAlign.Center,
-                lineHeight = 28.sp
-            )
-        }
-    }
-}
-
-@Composable
-fun AnswerOptions(
-    question: QuizQuestion,
-    selectedAnswer: Int?,
-    correctIndex: Int,
-    onAnswerSelected: (Int) -> Unit
-) {
-    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        question.options.forEachIndexed { index, option ->
-            AnswerButton(
-                text = option,
-                index = index,
-                selectedAnswer = selectedAnswer,
-                correctIndex = correctIndex,
-                onSelected = { onAnswerSelected(index) }
-            )
-        }
-    }
-}
-
-@Composable
-fun AnswerButton(
-    text: String,
-    index: Int,
-    selectedAnswer: Int?,
-    correctIndex: Int,
-    onSelected: () -> Unit
-) {
-    var pressed by remember { mutableStateOf(false) }
-    val scale by animateFloatAsState(
-        targetValue = if (pressed) 0.95f else 1f,
-        animationSpec = spring(Spring.DampingRatioMediumBouncy),
-        label = "answerScale"
-    )
-
-    // Shake animation for wrong answer
-    val shakeAnim = remember { Animatable(0f) }
-    val isWrong = selectedAnswer == index && index != correctIndex
-    LaunchedEffect(isWrong) {
-        if (isWrong) {
-            repeat(4) {
-                shakeAnim.animateTo(8f, tween(50))
-                shakeAnim.animateTo(-8f, tween(50))
-            }
-            shakeAnim.animateTo(0f, tween(50))
-        }
-    }
-
-    LaunchedEffect(pressed) {
-        if (pressed) { delay(120); pressed = false }
-    }
-
-    val (bgColor, borderColor, textColor) = when {
-        selectedAnswer == null -> Triple(CardBackground, CardBorder.copy(0.5f), StarWhite)
-        index == correctIndex  -> Triple(SpaceGreen.copy(0.2f), SpaceGreen, SpaceGreen)
-        index == selectedAnswer -> Triple(SpaceRed.copy(0.2f), SpaceRed, SpaceRed)
-        else -> Triple(CardBackground.copy(0.4f), CardBorder.copy(0.2f), StarWhite.copy(0.35f))
-    }
-
-    val optionLabel = listOf("A", "B", "C", "D")[index]
-
-    Button(
-        onClick = { if (selectedAnswer == null) { pressed = true; onSelected() } },
+fun GameOverOverlay(score: Int, highScore: Int, onRestart: () -> Unit, onBack: () -> Unit) {
+    Box(
         modifier = Modifier
-            .fillMaxWidth()
-            .height(56.dp)
-            .scale(scale)
-            .graphicsLayer { translationX = shakeAnim.value },
-        shape = RoundedCornerShape(14.dp),
-        colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
-        contentPadding = PaddingValues(0.dp),
-        elevation = ButtonDefaults.buttonElevation(0.dp)
+            .fillMaxSize()
+            .background(Color.Black.copy(0.75f)),
+        contentAlignment = Alignment.Center
     ) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(bgColor, RoundedCornerShape(14.dp))
-                .border(1.5.dp, borderColor, RoundedCornerShape(14.dp))
-                .padding(horizontal = 16.dp),
-            contentAlignment = Alignment.CenterStart
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(14.dp),
+            modifier = Modifier.padding(32.dp)
         ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            Text("GAME OVER", color = SpaceRed, fontSize = 36.sp, fontWeight = FontWeight.Black, letterSpacing = 4.sp)
+            Text("Score: $score", color = StarWhite, fontSize = 22.sp, fontWeight = FontWeight.Bold)
+            if (score >= highScore) {
+                Text("New High Score!", color = SpaceGold, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+            } else {
+                Text("Best: $highScore", color = SpaceGold, fontSize = 14.sp)
+            }
+            Spacer(modifier = Modifier.height(8.dp))
+            Button(
+                onClick = onRestart,
+                colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
+                contentPadding = PaddingValues(0.dp),
+                shape = RoundedCornerShape(14.dp),
+                modifier = Modifier.fillMaxWidth(0.65f).height(50.dp)
             ) {
                 Box(
                     modifier = Modifier
-                        .size(30.dp)
-                        .background(borderColor.copy(0.2f), CircleShape)
-                        .border(1.dp, borderColor, CircleShape),
+                        .fillMaxSize()
+                        .background(Brush.horizontalGradient(listOf(SpacePurple, SpaceCyan)), RoundedCornerShape(14.dp)),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text(optionLabel, color = textColor, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                    Text("PLAY AGAIN", color = Color.White, fontWeight = FontWeight.Black, fontSize = 15.sp)
                 }
-                Text(text, color = textColor, fontSize = 15.sp, fontWeight = FontWeight.Medium)
+            }
+            TextButton(onClick = onBack) {
+                Text("Back to Menu", color = StarWhite.copy(0.6f), fontSize = 13.sp)
             }
         }
-    }
-}
-
-@Composable
-fun FeedbackBanner(message: String, isCorrect: Boolean) {
-    val color = if (isCorrect) SpaceGreen else SpaceRed
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(color.copy(0.15f), RoundedCornerShape(14.dp))
-            .border(1.dp, color.copy(0.5f), RoundedCornerShape(14.dp))
-            .padding(14.dp),
-        contentAlignment = Alignment.Center
-    ) {
-        Text(
-            text = message,
-            color = color,
-            fontSize = 14.sp,
-            fontWeight = FontWeight.SemiBold,
-            textAlign = TextAlign.Center
-        )
-    }
-}
-
-@Composable
-fun QuizResultScreen(score: Int, total: Int, onRestart: () -> Unit, modifier: Modifier = Modifier) {
-    val percentage = (score.toFloat() / total.toFloat() * 100).toInt()
-    val message = when {
-        percentage >= 90 -> "Cosmic Master!"
-        percentage >= 70 -> "Star Explorer!"
-        percentage >= 50 -> "Space Cadet!"
-        else             -> "Keep Exploring!"
-    }
-    val emoji = when {
-        percentage >= 90 -> "🏆"
-        percentage >= 70 -> "🌟"
-        percentage >= 50 -> "🚀"
-        else             -> "🌙"
-    }
-
-    var visible by remember { mutableStateOf(false) }
-    val scale by animateFloatAsState(
-        targetValue = if (visible) 1f else 0.4f,
-        animationSpec = spring(Spring.DampingRatioMediumBouncy, Spring.StiffnessLow),
-        label = "resultScale"
-    )
-    LaunchedEffect(Unit) { visible = true }
-
-    Column(
-        modifier = modifier.fillMaxSize().padding(horizontal = 32.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        Text(emoji, fontSize = 80.sp, modifier = Modifier.scale(scale))
-        Spacer(modifier = Modifier.height(16.dp))
-        Text(message, color = SpaceGold, fontSize = 30.sp, fontWeight = FontWeight.Black, textAlign = TextAlign.Center)
-        Spacer(modifier = Modifier.height(8.dp))
-        Text("Final Score", color = StarWhite.copy(0.55f), fontSize = 15.sp)
-        Spacer(modifier = Modifier.height(20.dp))
-
-        Box(
-            modifier = Modifier
-                .size(150.dp)
-                .scale(scale)
-                .background(
-                    Brush.radialGradient(listOf(SpacePurple.copy(0.3f), Color.Transparent)),
-                    CircleShape
-                )
-                .border(
-                    2.dp,
-                    Brush.sweepGradient(listOf(SpaceCyan, SpacePurpleLight, SpaceGold, SpaceCyan)),
-                    CircleShape
-                ),
-            contentAlignment = Alignment.Center
-        ) {
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text("$score/$total", color = StarWhite, fontSize = 38.sp, fontWeight = FontWeight.Black)
-                Text("$percentage%", color = SpaceCyan, fontSize = 16.sp, fontWeight = FontWeight.Bold)
-            }
-        }
-
-        Spacer(modifier = Modifier.height(48.dp))
-        CosmicButton(
-            text = "Play Again",
-            gradient = Brush.horizontalGradient(listOf(SpacePurple, SpaceCyan.copy(0.8f))),
-            onClick = onRestart,
-            icon = "🔄",
-            modifier = Modifier.fillMaxWidth()
-        )
     }
 }

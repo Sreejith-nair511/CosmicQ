@@ -39,9 +39,14 @@ fun SwipeCardStack(
     cards: List<SwipeCard>,
     onSwipeRight: (SwipeCard) -> Unit,
     onSwipeLeft: (SwipeCard) -> Unit,
+    onNearEnd: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     var topIndex by remember { mutableIntStateOf(0) }
+
+    LaunchedEffect(topIndex, cards.size) {
+        if (cards.size - topIndex <= 10) onNearEnd()
+    }
 
     Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
         // Render up to 3 cards in reverse so top card is drawn last

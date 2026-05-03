@@ -124,23 +124,14 @@ fun SwipeScreen(
                             modifier = Modifier.fillMaxSize(),
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
-                            // Hint row
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .padding(horizontal = 24.dp, vertical = 4.dp),
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
-                                Text(
-                                    "Swipe left to skip",
-                                    color = SpaceRed.copy(0.7f),
-                                    fontSize = 12.sp
-                                )
-                                Text(
-                                    "Swipe right to save",
-                                    color = SpaceGreen.copy(0.7f),
-                                    fontSize = 12.sp
-                                )
+                                Text("Swipe left to skip", color = SpaceRed.copy(0.7f), fontSize = 12.sp)
+                                Text("Swipe right to save", color = SpaceGreen.copy(0.7f), fontSize = 12.sp)
                             }
 
                             SwipeCardStack(
@@ -153,6 +144,7 @@ fun SwipeScreen(
                                     vm.onSwipeLeft(card)
                                     ttsManager.stop()
                                 },
+                                onNearEnd = { vm.loadMoreCards() },
                                 modifier = Modifier
                                     .weight(1f)
                                     .padding(horizontal = 8.dp)

@@ -7,7 +7,8 @@ import retrofit2.http.Query
 interface SpaceNewsApi {
     @GET("articles")
     suspend fun getArticles(
-        @Query("limit")    limit: Int    = 20,
+        @Query("limit")    limit: Int    = 100,
+        @Query("offset")   offset: Int   = 0,
         @Query("ordering") ordering: String = "-published_at"
     ): SpaceNewsResponse
 }

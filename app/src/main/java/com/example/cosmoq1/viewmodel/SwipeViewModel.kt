@@ -30,6 +30,10 @@ class SwipeViewModel(application: Application) : AndroidViewModel(application) {
     private val _toastMessage = MutableStateFlow<String?>(null)
     val toastMessage: StateFlow<String?> = _toastMessage.asStateFlow()
 
+    // Pagination offset for infinite loading
+    private var currentOffset = 0
+    private val allCards = mutableListOf<SwipeCard>()
+
     init {
         loadCards()
         observeSaved()
@@ -38,14 +42,30 @@ class SwipeViewModel(application: Application) : AndroidViewModel(application) {
     fun loadCards() {
         viewModelScope.launch {
             _uiState.value = SwipeUiState.Loading
+            currentOffset = 0
+            allCards.clear()
             try {
-                val cards = repo.fetchCards()
-                _uiState.value = if (cards.isEmpty())
+                val cards = repo.fetchCards(offset = 0)
+                allCards.addAll(cards)
+                _uiState.value = if (allCards.isEmpty())
                     SwipeUiState.Error("No content available. Pull to refresh.")
                 else
-                    SwipeUiState.Success(cards)
+                    SwipeUiState.Success(allCards.toList())
             } catch (e: Exception) {
                 _uiState.value = SwipeUiState.Error(e.message ?: "Failed to load content.")
+            }
+        }
+    }
+
+    fun loadMoreCards() {
+        viewModelScope.launch {
+            currentOffset += 100
+            try {
+                val more = repo.fetchCards(offset = currentOffset)
+                allCards.addAll(more)
+                _uiState.value = SwipeUiState.Success(allCards.toList())
+            } catch (_: Exception) {
+                // Silently fail — existing cards still shown
             }
         }
     }
@@ -57,9 +77,7 @@ class SwipeViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    fun onSwipeLeft(card: SwipeCard) {
-        // Skip — no action needed
-    }
+    fun onSwipeLeft(card: SwipeCard) { /* skip */ }
 
     fun removeFromSaved(id: String) {
         viewModelScope.launch { repo.removeCard(id) }

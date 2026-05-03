@@ -21,6 +21,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -86,10 +87,12 @@ fun HomeScreen(themeVm: ThemeViewModel) {
         AnimatedStarField(bgColor = bgColor)
 
         // Nebula glows
+        val nebulaColor1 = MaterialTheme.colorScheme.secondary.copy(alpha = 0.12f)
+        val nebulaColor2 = MaterialTheme.colorScheme.primary.copy(alpha = 0.08f)
         Canvas(modifier = Modifier.fillMaxSize()) {
             drawCircle(
                 brush = Brush.radialGradient(
-                    listOf(MaterialTheme.colorScheme.secondary.copy(0.12f), Color.Transparent),
+                    listOf(nebulaColor1, Color.Transparent),
                     center = Offset(size.width * 0.15f, size.height * 0.25f),
                     radius = size.width * 0.55f
                 ),
@@ -98,7 +101,7 @@ fun HomeScreen(themeVm: ThemeViewModel) {
             )
             drawCircle(
                 brush = Brush.radialGradient(
-                    listOf(MaterialTheme.colorScheme.primary.copy(0.08f), Color.Transparent),
+                    listOf(nebulaColor2, Color.Transparent),
                     center = Offset(size.width * 0.85f, size.height * 0.75f),
                     radius = size.width * 0.45f
                 ),
@@ -199,7 +202,7 @@ fun HomeScreen(themeVm: ThemeViewModel) {
                     modifier = Modifier.fillMaxWidth()
                 )
                 CosmicButton(
-                    text = "Space Quiz",
+                    text = "Space Shooter",
                     gradient = Brush.horizontalGradient(listOf(SpacePurple, Color(0xFF9C27B0))),
                     icon = "",
                     onClick = { context.startActivity(Intent(context, QuizActivity::class.java)) },
@@ -350,7 +353,7 @@ fun CosmicButton(
         onClick = { pressed = true; onClick() },
         modifier = modifier
             .height(60.dp)
-            .graphicsLayerScale(scale),
+            .scale(scale),
         shape = RoundedCornerShape(18.dp),
         colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
         contentPadding = PaddingValues(0.dp),
@@ -373,6 +376,4 @@ fun CosmicButton(
     }
 }
 
-// Helper to avoid importing graphicsLayer in the button
-private fun Modifier.graphicsLayerScale(scale: Float): Modifier =
-    this.then(androidx.compose.ui.draw.scale(scale))
+

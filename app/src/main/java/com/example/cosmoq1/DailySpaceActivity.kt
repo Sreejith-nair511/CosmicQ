@@ -66,7 +66,7 @@ fun DailySpaceScreen(vm: DailySpaceViewModel = viewModel()) {
                         }
                     },
                     actions = {
-                        IconButton(onClick = vm::fetchApod) {
+                        IconButton(onClick = vm::forceRefresh) {
                             Icon(Icons.Default.Refresh, contentDescription = "Refresh", tint = SpaceCyan)
                         }
                     },
