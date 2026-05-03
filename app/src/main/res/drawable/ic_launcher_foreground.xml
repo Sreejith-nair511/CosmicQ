@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- Saturn-style planet body -->
+    <path
+        android:pathData="M54,38 m-18,0 a18,18 0 1,0 36,0 a18,18 0 1,0 -36,0z">
+        <aapt:attr xmlns:aapt="http://schemas.android.com/aapt" name="android:fillColor">
+            <gradient
+                android:type="radial"
+                android:centerX="48"
+                android:centerY="33"
+                android:gradientRadius="20">
+                <item android:offset="0.0" android:color="#FF00D4FF"/>
+                <item android:offset="0.5" android:color="#FF1E3A8A"/>
+                <item android:offset="1.0" android:color="#FF0A0A2E"/>
+            </gradient>
+        </aapt:attr>
+    </path>
+
+    <!-- Planet ring (left side, behind planet) -->
+    <path
+        android:pathData="M22,38 Q54,28 86,38"
+        android:strokeWidth="3.5"
+        android:strokeColor="#80FFD700"
+        android:fillColor="#00000000"
+        android:strokeAlpha="0.5"/>
+
+    <!-- Planet ring (right side, in front) -->
+    <path
+        android:pathData="M22,38 Q54,48 86,38"
+        android:strokeWidth="3.5"
+        android:strokeColor="#FFFFD700"
+        android:fillColor="#00000000"/>
+
+    <!-- Planet highlight glint -->
+    <path
+        android:fillColor="#40FFFFFF"
+        android:pathData="M44,30 a5,4 0 1,0 10,0 a5,4 0 1,0 -10,0z"/>
+
+    <!-- Rocket body -->
+    <path
+        android:pathData="M54,62 L50,78 L58,78 Z">
+        <aapt:attr xmlns:aapt="http://schemas.android.com/aapt" name="android:fillColor">
+            <gradient
+                android:type="linear"
+                android:startX="50"
+                android:startY="62"
+                android:endX="58"
+                android:endY="78">
+                <item android:offset="0.0" android:color="#FFAB7FF8"/>
+                <item android:offset="1.0" android:color="#FF7C3AED"/>
+            </gradient>
+        </aapt:attr>
+    </path>
+
+    <!-- Rocket nose cone -->
+    <path
+        android:pathData="M54,55 L50,65 L58,65 Z"
+        android:fillColor="#FF00D4FF"/>
+
+    <!-- Rocket window -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M52,68 a2,2 0 1,0 4,0 a2,2 0 1,0 -4,0z"/>
+
+    <!-- Rocket left fin -->
+    <path
+        android:pathData="M50,74 L45,80 L50,78 Z"
+        android:fillColor="#FF7C3AED"/>
+
+    <!-- Rocket right fin -->
+    <path
+        android:pathData="M58,74 L63,80 L58,78 Z"
+        android:fillColor="#FF7C3AED"/>
+
+    <!-- Rocket flame -->
+    <path
+        android:pathData="M51,78 Q54,88 57,78 Z">
+        <aapt:attr xmlns:aapt="http://schemas.android.com/aapt" name="android:fillColor">
+            <gradient
+                android:type="linear"
+                android:startX="54"
+                android:startY="78"
+                android:endX="54"
+                android:endY="88">
+                <item android:offset="0.0" android:color="#FFFFD700"/>
+                <item android:offset="0.6" android:color="#FFFF6B35"/>
+                <item android:offset="1.0" android:color="#00FF6B35"/>
+            </gradient>
+        </aapt:attr>
+    </path>
+
+    <!-- Small star sparkles near rocket -->
+    <path android:fillColor="#FFFFD700"
+        android:pathData="M42,65 L43,62 L44,65 L41,63.5 L45,63.5 Z"/>
+    <path android:fillColor="#FF00D4FF"
+        android:pathData="M65,70 L65.8,68 L66.6,70 L64.4,68.8 L67,68.8 Z"/>
+
+</vector>
